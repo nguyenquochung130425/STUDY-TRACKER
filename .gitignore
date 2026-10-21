@@ -13,6 +13,7 @@ doc/api/
 
 # dotenv environment variables file
 .env*
+firebase_config.json
 
 # Avoid committing generated Javascript files:
 *.dart.js
@@ -32,4 +33,3 @@ doc/api/
 .idea/
 *.iml
 .metadata
-

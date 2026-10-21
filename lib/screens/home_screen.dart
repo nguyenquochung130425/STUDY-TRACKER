@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../models/subject.dart';
 import '../providers/study_provider.dart';
+import 'cloud_sync_screen.dart';
 import '../widgets/daily_stats_card.dart';
 import '../widgets/pomodoro_timer_widget.dart';
 import '../widgets/subject_card.dart';
@@ -137,6 +138,17 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.cloud_sync_outlined),
+            tooltip: 'Tài khoản và đồng bộ',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const CloudSyncScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.add_circle_outline),
             tooltip: 'Thêm môn học',
