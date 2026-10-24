@@ -1,0 +1,47 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isSupportedCollection(collection) {
+      return collection in [
+        'subjects',
+        'sessions',
+        'tasks',
+        'grades',
+        'deletions'
+      ];
+    }
+
+    function hasValidRecordShape(collection) {
+      return collection == 'deletions'
+          ? request.resource.data.keys().hasAll([
+              'collection',
+              'recordId',
+              'deletedAt'
+            ]) &&
+            request.resource.data.collection in [
+              'subjects',
+              'sessions',
+              'tasks',
+              'grades'
+            ] &&
+            request.resource.data.recordId is string &&
+            request.resource.data.deletedAt is timestamp
+          : request.resource.data.keys().hasAll(['data', 'updatedAt']) &&
+            request.resource.data.data is map &&
+            request.resource.data.updatedAt is timestamp;
+    }
+
+    match /users/{userId}/{collection}/{recordId} {
+      allow read: if isOwner(userId) && isSupportedCollection(collection);
+      allow create, update: if isOwner(userId) &&
+        isSupportedCollection(collection) &&
+        hasValidRecordShape(collection);
+      allow delete: if isOwner(userId) && isSupportedCollection(collection);
+    }
+  }
+}

@@ -8,6 +8,10 @@ import 'core/widgets/app_lock_wrapper.dart';
 import 'providers/auth_provider.dart';
 
 
+import 'core/theme/app_theme.dart';
+import 'features/app_lock/app_lock_gate.dart';
+import 'features/app_lock/app_lock_provider.dart';
+import 'features/app_lock/app_lock_storage.dart';
 import 'providers/cloud_sync_provider.dart';
  main
 import 'providers/pomodoro_provider.dart';
@@ -58,17 +62,23 @@ Future<void> main() async {
 class StudyTrackerApp extends StatelessWidget {
   final bool firebaseReady;
   final String? firebaseInitializationError;
+  final AppLockStorage? appLockStorage;
 
   const StudyTrackerApp({
     super.key,
     this.firebaseReady = false,
     this.firebaseInitializationError,
+    this.appLockStorage,
   });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+ phan4
+        ChangeNotifierProvider<AppLockProvider>(
+          create: (_) => AppLockProvider(storage: appLockStorage),
+
         ChangeNotifierProvider<ThemeProvider>(
           create: (_) => ThemeProvider(),
         ),
@@ -80,7 +90,9 @@ class StudyTrackerApp extends StatelessWidget {
         ),
         ChangeNotifierProvider<StudyProvider>(
           create: (_) => StudyProvider(),
+ main
         ),
+        ChangeNotifierProvider<StudyProvider>(create: (_) => StudyProvider()),
         ChangeNotifierProvider<CloudSyncProvider>(
           create: (context) => CloudSyncProvider(
             studyProvider: context.read<StudyProvider>(),
@@ -96,6 +108,17 @@ class StudyTrackerApp extends StatelessWidget {
           },
         ),
       ],
+ phan4
+      child: MaterialApp(
+        title: 'Study Tracker',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        builder: (context, child) =>
+            AppLockGate(child: child ?? const SizedBox.shrink()),
+        home: const MainNavigationScreen(),
+
       child: Consumer2<ThemeProvider, AuthProvider>(
         builder: (context, themeProvider, authProvider, _) {
           return MaterialApp(
@@ -111,6 +134,7 @@ class StudyTrackerApp extends StatelessWidget {
             ),
           );
         },
+ main
       ),
     );
   }

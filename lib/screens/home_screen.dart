@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+
+import '../features/app_lock/app_lock_settings_screen.dart';
 import '../models/subject.dart';
 import '../providers/study_provider.dart';
 import 'cloud_sync_screen.dart';
@@ -56,7 +58,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text('Chọn màu đại diện:', style: TextStyle(fontWeight: FontWeight.w600)),
+                  const Text(
+                    'Chọn màu đại diện:',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                   const SizedBox(height: 10),
                   Wrap(
                     spacing: 10,
@@ -138,6 +143,17 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.lock_outline),
+            tooltip: 'Khóa ứng dụng bằng PIN',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const AppLockSettingsScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.cloud_sync_outlined),
             tooltip: 'Tài khoản và đồng bộ',
