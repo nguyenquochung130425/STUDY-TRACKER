@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_tracker/models/grade_entry.dart';
 import 'package:study_tracker/models/study_session.dart';
+import 'package:study_tracker/models/study_task.dart';
 import 'package:study_tracker/providers/study_provider.dart';
 
 Future<void> waitForProvider(StudyProvider provider) async {
@@ -138,4 +139,60 @@ void main() {
     expect(provider.getSubjectSecondsThisWeek('sub_1'), 0);
     expect(provider.weeklyMinutes.reduce((a, b) => a + b), 0);
   });
+
+  test('loads legacy tasks and updates task completion progress', () async {
+    SharedPreferences.setMockInitialValues({
+      'study_tracker_tasks': '[{"id":"task_legacy","title":"Legacy"}]',
+    });
+    final provider = StudyProvider();
+    await waitForProvider(provider);
+
+    expect(provider.tasks.single.description, '');
+    expect(provider.tasks.single.priority, TaskPriority.medium);
+    expect(provider.getSubjectTaskCompletionRate('sub_1'), isNull);
+
+    await provider.addTask(
+      const StudyTask(id: 'task_math', title: 'Math', subjectId: 'sub_1'),
+    );
+    expect(provider.getSubjectTaskCompletionRate('sub_1'), 0);
+
+    await provider.toggleTaskCompletion('task_math');
+    expect(provider.getSubjectTaskCompletionRate('sub_1'), 1);
+  });
+
+  test(
+    'updates a task while allowing subject and deadline to be cleared',
+    () async {
+      SharedPreferences.setMockInitialValues({});
+      final provider = StudyProvider();
+      await waitForProvider(provider);
+      final dueDate = DateTime(2026, 10, 25, 12);
+      await provider.addTask(
+        StudyTask(
+          id: 'task_edit',
+          title: 'Initial title',
+          description: 'Initial description',
+          subjectId: 'sub_1',
+          dueDate: dueDate,
+          priority: TaskPriority.urgent,
+        ),
+      );
+
+      await provider.updateTask(
+        provider.tasks.single.copyWith(
+          title: 'Updated title',
+          description: 'Updated description',
+          clearSubjectId: true,
+          clearDueDate: true,
+          priority: TaskPriority.low,
+        ),
+      );
+
+      expect(provider.tasks.single.title, 'Updated title');
+      expect(provider.tasks.single.description, 'Updated description');
+      expect(provider.tasks.single.subjectId, isNull);
+      expect(provider.tasks.single.dueDate, isNull);
+      expect(provider.tasks.single.priority, TaskPriority.low);
+    },
+  );
 }

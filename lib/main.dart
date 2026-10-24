@@ -2,6 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/app_lock/app_lock_gate.dart';
@@ -12,12 +13,15 @@ import 'providers/cloud_sync_provider.dart';
 import 'providers/pomodoro_provider.dart';
 import 'providers/security_provider.dart';
 import 'providers/study_provider.dart';
+import 'services/study_notification_service.dart';
 import 'screens/login_screen.dart';
 import 'services/firebase_configuration.dart';
 import 'screens/main_navigation_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final notificationService = StudyNotificationService();
+  await notificationService.initialize();
 
   var firebaseReady = false;
   String? firebaseInitializationError;
@@ -47,6 +51,7 @@ Future<void> main() async {
     StudyTrackerApp(
       firebaseReady: firebaseReady,
       firebaseInitializationError: firebaseInitializationError,
+      notificationService: notificationService,
     ),
   );
 }
@@ -55,12 +60,14 @@ class StudyTrackerApp extends StatelessWidget {
   final bool firebaseReady;
   final String? firebaseInitializationError;
   final AppLockStorage? appLockStorage;
+  final StudyNotificationService? notificationService;
 
   const StudyTrackerApp({
     super.key,
     this.firebaseReady = false,
     this.firebaseInitializationError,
     this.appLockStorage,
+    this.notificationService,
   });
 
   @override
@@ -70,17 +77,14 @@ class StudyTrackerApp extends StatelessWidget {
         ChangeNotifierProvider<AppLockProvider>(
           create: (_) => AppLockProvider(storage: appLockStorage),
         ),
-        ChangeNotifierProvider<ThemeProvider>(
-          create: (_) => ThemeProvider(),
-        ),
-        ChangeNotifierProvider<AuthProvider>(
-          create: (_) => AuthProvider(),
-        ),
+        ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider<AuthProvider>(create: (_) => AuthProvider()),
         ChangeNotifierProvider<SecurityProvider>(
           create: (_) => SecurityProvider(),
         ),
         ChangeNotifierProvider<StudyProvider>(
-          create: (_) => StudyProvider(),
+          create: (_) =>
+              StudyProvider(notificationService: notificationService),
         ),
         ChangeNotifierProvider<CloudSyncProvider>(
           create: (context) => CloudSyncProvider(
@@ -105,9 +109,8 @@ class StudyTrackerApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeProvider.themeMode,
-            builder: (context, child) => AppLockGate(
-              child: child ?? const SizedBox.shrink(),
-            ),
+            builder: (context, child) =>
+                AppLockGate(child: child ?? const SizedBox.shrink()),
             home: authProvider.isAuthenticated
                 ? const MainNavigationScreen()
                 : const LoginScreen(),
