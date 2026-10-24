@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/subject.dart';
+import '../providers/pomodoro_provider.dart';
 import '../providers/study_provider.dart';
 
 class SubjectCard extends StatelessWidget {
   final Subject subject;
   final VoidCallback? onTap;
 
-  const SubjectCard({
-    super.key,
-    required this.subject,
-    this.onTap,
-  });
+  const SubjectCard({super.key, required this.subject, this.onTap});
 
   String _formatHours(int seconds) {
     final hours = seconds / 3600.0;
@@ -25,10 +23,16 @@ class SubjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final study = context.watch<StudyProvider>();
+    final pomodoro = context.watch<PomodoroProvider>();
     final theme = Theme.of(context);
 
-    final todaySeconds = study.getSubjectSecondsToday(subject.id);
-    final weekSeconds = study.getSubjectSecondsThisWeek(subject.id);
+    final currentSessionSeconds = pomodoro.selectedSubjectId == subject.id
+        ? pomodoro.elapsedFocusSeconds
+        : 0;
+    final todaySeconds =
+        study.getSubjectSecondsToday(subject.id) + currentSessionSeconds;
+    final weekSeconds =
+        study.getSubjectSecondsThisWeek(subject.id) + currentSessionSeconds;
     final weekHours = weekSeconds / 3600.0;
     final progress = (subject.weeklyTargetHours > 0)
         ? (weekHours / subject.weeklyTargetHours).clamp(0.0, 1.0)
@@ -60,11 +64,7 @@ class SubjectCard extends StatelessWidget {
                       color: subject.color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(
-                      subject.icon,
-                      color: subject.color,
-                      size: 24,
-                    ),
+                    child: Icon(subject.icon, color: subject.color, size: 24),
                   ),
                   const SizedBox(width: 14),
                   Expanded(

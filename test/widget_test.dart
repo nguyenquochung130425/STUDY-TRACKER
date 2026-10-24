@@ -14,5 +14,10 @@ void main() {
     expect(find.text('Học tập'), findsOneWidget);
     expect(find.text('Thống kê'), findsOneWidget);
     expect(find.text('Nhiệm vụ'), findsOneWidget);
+
+    await tester.tap(find.text('Thống kê'));
+    await tester.pumpAndSettle();
+    expect(find.text('Điểm số theo môn'), findsOneWidget);
+    expect(find.text('Chưa có điểm'), findsWidgets);
   });
 }

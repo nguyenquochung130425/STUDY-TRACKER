@@ -1,9 +1,12 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
+
 import '../models/study_session.dart';
 import 'study_provider.dart';
 
 enum PomodoroMode { focus, shortBreak, longBreak }
+
 enum PomodoroStatus { initial, running, paused, completed }
 
 class PomodoroProvider extends ChangeNotifier {
@@ -37,6 +40,12 @@ class PomodoroProvider extends ChangeNotifier {
 
   bool get isRunning => _status == PomodoroStatus.running;
   bool get isPaused => _status == PomodoroStatus.paused;
+  int get elapsedFocusSeconds =>
+      _mode == PomodoroMode.focus &&
+          (_status == PomodoroStatus.running ||
+              _status == PomodoroStatus.paused)
+      ? _totalSeconds - _remainingSeconds
+      : 0;
 
   double get progress {
     if (_totalSeconds == 0) return 0.0;

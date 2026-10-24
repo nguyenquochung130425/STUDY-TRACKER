@@ -4,7 +4,11 @@
 - **Kho lưu trữ:** [https://github.com/nguyenquochung130425/STUDY-TRACKER.git](https://github.com/nguyenquochung130425/STUDY-TRACKER.git)
 - **Nhánh chính:** `main` | **Nhánh phát triển:** `develop` | **Nhánh chức năng:** `feature/auth-security`
 - **Công nghệ nền tảng:** Flutter 3.47.5 & Dart 3.13.4
+ feature/auth-security
 - **Cập nhật ngày:** 12/10/2026
+
+- **Cập nhật ngày:** 21/10/2026
+ main
 
 ---
 
@@ -52,6 +56,24 @@
 - [x] Đảm bảo vượt qua 100% test cases: `flutter test` (5/5 tests passed).
 - [x] Phân tích tĩnh mã nguồn `flutter analyze`: **No issues found** (0 errors, 0 warnings).
 
+### 7. Quản lý Điểm số (Chức năng 3.5)
+- [x] Lưu nhiều đầu điểm cho từng môn học trên thiết bị.
+- [x] Thêm, sửa, xóa đầu điểm; tính điểm trung bình có trọng số trên thang 10.
+- [x] Hiển thị biểu đồ điểm trung bình theo môn và xu hướng điểm theo thời gian.
+
+### 8. Theo dõi tiến độ & Thống kê (Chức năng 3.6 và 3.7)
+- [x] Theo dõi thời lượng và tỷ lệ hoàn thành mục tiêu hàng tuần theo từng môn.
+- [x] Tổng hợp thời lượng, số phiên trong tuần; hiển thị biểu đồ thời gian học theo ngày.
+- [x] Lọc phiên học tương lai khỏi số liệu tiến độ tuần và hiển thị lịch sử học gần đây.
+
+### 9. Cloud Sync Engine (Chức năng 3.11)
+- [x] Thêm đăng ký/đăng nhập Firebase bằng email/mật khẩu và Google.
+- [x] Đồng bộ môn học, phiên học, nhiệm vụ và điểm theo tài khoản Firestore.
+- [x] Hỗ trợ đồng bộ thủ công, khi có mạng trở lại và sau khi dữ liệu cục bộ thay đổi.
+- [x] Gộp dữ liệu theo thời điểm cập nhật và lưu dấu xóa để không khôi phục bản ghi đã xóa.
+- [x] Cấu hình Firebase Web project trong `firebase_config.json` cục bộ; xác minh build Web thành công.
+- [ ] Bổ sung Firebase App ID cho Android/iOS/macOS nếu cần dùng đồng bộ trên các nền tảng này.
+
 ---
 
 ## 📁 Sơ Đồ Cấu Trúc Dự Án
@@ -79,16 +101,20 @@ STUDY-TRACKER/
 │   │       ├── custom_dialog.dart
 │   │       └── custom_text_field.dart
 │   ├── models/
+│   │   ├── grade_entry.dart
 │   │   ├── study_session.dart
 │   │   ├── study_task.dart
 │   │   ├── subject.dart
 │   │   └── user_model.dart
-│   ├── providers/
+│   ├── providers/feature/auth-security
 │   │   ├── auth_provider.dart
+│   │   ├── cloud_sync_provider.dart
+ main
 │   │   ├── pomodoro_provider.dart
 │   │   ├── security_provider.dart
 │   │   └── study_provider.dart
 │   ├── screens/
+│   │   ├── cloud_sync_screen.dart
 │   │   ├── home_screen.dart
 │   │   ├── login_screen.dart
 │   │   ├── main_navigation_screen.dart
@@ -97,6 +123,8 @@ STUDY-TRACKER/
 │   │   ├── register_screen.dart
 │   │   ├── statistics_screen.dart
 │   │   └── tasks_screen.dart
+│   ├── services/
+│   │   └── firebase_configuration.dart
 │   ├── widgets/
 │   │   ├── daily_stats_card.dart
 │   │   ├── pomodoro_timer_widget.dart
@@ -108,3 +136,23 @@ STUDY-TRACKER/
 ├── COMPLETED_TASKS.md
 └── README.md
 ```
+ feature/auth-security
+
+
+---
+
+## 📌 Lịch Sử Commit
+
+1. `04b2549` - `Initial commit`
+2. `85bb8e1` - `docs: update README with project overview and architecture`
+3. `b6ec0a7` - `feat: initialize Flutter project template for study_tracker`
+4. `25b0467` - `feat: add models, providers, widgets, Pomodoro timer, and screens`
+
+---
+
+## 🚀 Kế Hoạch Tiếp Theo (Roadmap)
+- [ ] Tích hợp thông báo đẩy nội bộ (`flutter_local_notifications`) khi hết giờ Pomodoro.
+- [ ] Tùy chỉnh độ dài thời gian tập trung & thời gian nghỉ theo ý thích người dùng.
+- [x] Triển khai Cloud Sync Engine qua Firebase (cần cấu hình Firebase project để sử dụng).
+- [ ] Xuất báo cáo học tập định dạng PDF / Excel.
+ main
