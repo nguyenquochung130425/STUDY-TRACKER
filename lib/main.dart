@@ -1,12 +1,23 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:provider/provider.dart'; feature/auth-security
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
+import 'core/widgets/app_lock_wrapper.dart';
+import 'providers/auth_provider.dart';
+
 
 import 'providers/cloud_sync_provider.dart';
+ main
 import 'providers/pomodoro_provider.dart';
+import 'providers/security_provider.dart';
 import 'providers/study_provider.dart';
+ feature/auth-security
+import 'screens/login_screen.dart';
+
 import 'services/firebase_configuration.dart';
+ main
 import 'screens/main_navigation_screen.dart';
 
 Future<void> main() async {
@@ -58,6 +69,15 @@ class StudyTrackerApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<ThemeProvider>(
+          create: (_) => ThemeProvider(),
+        ),
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider<SecurityProvider>(
+          create: (_) => SecurityProvider(),
+        ),
         ChangeNotifierProvider<StudyProvider>(
           create: (_) => StudyProvider(),
         ),
@@ -76,31 +96,21 @@ class StudyTrackerApp extends StatelessWidget {
           },
         ),
       ],
-      child: MaterialApp(
-        title: 'Study Tracker',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5),
-            brightness: Brightness.light,
-          ),
-          cardTheme: const CardThemeData(
-            elevation: 0,
-          ),
-        ),
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5),
-            brightness: Brightness.dark,
-          ),
-          cardTheme: const CardThemeData(
-            elevation: 0,
-          ),
-        ),
-        themeMode: ThemeMode.system,
-        home: const MainNavigationScreen(),
+      child: Consumer2<ThemeProvider, AuthProvider>(
+        builder: (context, themeProvider, authProvider, _) {
+          return MaterialApp(
+            title: 'Study Tracker',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeProvider.themeMode,
+            home: AppLockWrapper(
+              child: authProvider.isAuthenticated
+                  ? const MainNavigationScreen()
+                  : const LoginScreen(),
+            ),
+          );
+        },
       ),
     );
   }

@@ -16,20 +16,20 @@ class StudySession {
   });
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'subjectId': subjectId,
-        'durationSeconds': durationSeconds,
-        'timestamp': timestamp.toIso8601String(),
-        'mode': mode,
-        'note': note,
-      };
+    'id': id,
+    'subjectId': subjectId,
+    'durationSeconds': durationSeconds,
+    'timestamp': timestamp.toIso8601String(),
+    'mode': mode,
+    'note': note,
+  };
 
   factory StudySession.fromJson(Map<String, dynamic> json) => StudySession(
-        id: json['id'] as String,
-        subjectId: json['subjectId'] as String,
-        durationSeconds: json['durationSeconds'] as int,
-        timestamp: DateTime.parse(json['timestamp'] as String),
-        mode: json['mode'] as String? ?? 'focus',
-        note: json['note'] as String?,
-      );
+    id: json['id'] as String,
+    subjectId: json['subjectId'] as String,
+    durationSeconds: json['durationSeconds'] as int,
+    timestamp: DateTime.parse(json['timestamp'] as String),
+    mode: json['mode'] as String? ?? 'focus',
+    note: json['note'] as String?,
+  );
 }
