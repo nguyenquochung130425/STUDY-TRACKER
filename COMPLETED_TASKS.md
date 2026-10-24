@@ -2,58 +2,63 @@
 
 - **Dự án:** Study Tracker (Ứng dụng di động theo dõi thời gian học tập & quản lý môn học)
 - **Kho lưu trữ:** [https://github.com/nguyenquochung130425/STUDY-TRACKER.git](https://github.com/nguyenquochung130425/STUDY-TRACKER.git)
-- **Nhánh chính:** `main`
+- **Nhánh chính:** `main` | **Nhánh phát triển:** `develop` | **Nhánh chức năng:** `feature/auth-security`
 - **Công nghệ nền tảng:** Flutter 3.47.5 & Dart 3.13.4
+ phan4
 - **Cập nhật ngày:** 24/10/2026
+
+ feature/auth-security
+- **Cập nhật ngày:** 12/10/2026
+
+- **Cập nhật ngày:** 21/10/2026
+ main
+ main
 
 ---
 
-## ✅ Danh Mục Công Việc Đã Thực Hiện
+## 👑 Vai Trò Phụ Trách: Quản Lý Dự Án, Kiến Trúc Chung, Xác Thực (Auth) & Bảo Mật (Security)
 
-### 1. Khởi tạo & Cấu hình Repository
-- [x] Clone mã nguồn từ GitHub về thư mục làm việc cục bộ.
-- [x] Cấu hình loại trừ các tệp IDE (`.idea/`, `*.iml`, `.metadata`) vào tệp `.gitignore`.
-- [x] Biên soạn tài liệu chi tiết `README.md` bằng Tiếng Việt (mô tả tính năng, kiến trúc thư mục, công nghệ và hướng dẫn cài đặt).
-- [x] Khởi tạo khung dự án Flutter `study_tracker` hỗ trợ đa nền tảng (Android, iOS, Web, Windows Desktop).
+### 1. Khởi tạo Kiến Trúc Nền Tảng (Base Architecture & Design System)
+- [x] Thiết lập cấu trúc thư mục chuẩn **Feature-first kết hợp Core-shared** (`lib/core/`, `lib/models/`, `lib/providers/`, `lib/screens/`, `lib/widgets/`).
+- [x] Cấu hình hệ thống Bảng màu (`AppColors`) chuẩn WCAG, hỗ trợ đầy đủ **Light Mode & Dark Mode**.
+- [x] Định nghĩa hệ thống Typography chuẩn Material 3 (`AppTypography`) từ Display, Title, Body đến Label.
+- [x] Cấu hình hoàn chỉnh `AppTheme` (Light/Dark ThemeData) với `CardTheme`, `InputDecorationTheme`, `ElevatedButtonTheme`, `NavigationBarTheme`.
+- [x] Xây dựng `ThemeProvider` hỗ trợ người dùng chuyển đổi 3 chế độ (Theo hệ thống / Sáng / Tối) lưu trữ qua `SharedPreferences`.
+- [x] Xây dựng bộ UI Components dùng chung cho toàn bộ dự án (`lib/core/widgets/`):
+  - `CustomButton`: Hỗ trợ 5 kiểu dáng (`primary`, `secondary`, `outline`, `text`, `danger`), trạng thái tải spinner `isLoading`, hỗ trợ Icon.
+  - `CustomTextField`: Hỗ trợ icon đầu/cuối, toggle ẩn/hiện mật khẩu dạng icon mắt, validation chuẩn FormState.
+  - `CustomDialog`: Hộp thoại xác nhận thao tác nguy hiểm `CustomDialog.showConfirm()` và thông báo `CustomDialog.showAlert()`.
 
-### 2. Quản lý Thư viện & Phụ thuộc (`pubspec.yaml`)
-- [x] `provider: ^6.1.5+1`: Quản lý trạng thái và luồng dữ liệu ứng dụng.
-- [x] `intl: ^0.20.3`: Định dạng hiển thị ngày tháng, giờ và số liệu.
-- [x] `fl_chart: ^1.2.0`: Hiển thị biểu đồ cột thống kê thời gian học tập trong tuần.
-- [x] `shared_preferences: ^2.5.6`: Lưu trữ cục bộ dữ liệu môn học, phiên học và nhiệm vụ.
+### 2. Chức Năng 3.1: Đăng Ký, Đăng Nhập & Quản Lý Hồ Sơ (Auth)
+- [x] Thiết kế model người dùng `UserModel` (id, email, displayName, createdAt, avatar).
+- [x] Triển khai dịch vụ xác thực `AuthService`: Lưu trữ dữ liệu an toàn trong `SharedPreferences`, hỗ trợ tài khoản demo mặc định, thiết kế sẵn mô hình để hoán đổi sang Firebase Auth / REST API.
+- [x] Triển khai `AuthProvider`: Quản lý các trạng thái `AuthStatus` (authenticated, unauthenticated, loading), xử lý login, register, updateProfile, logout.
+- [x] Thiết kế giao diện Đăng nhập `LoginScreen`: Giao diện hiện đại, validate email/password, nút "Dùng thử tài khoản Demo" giúp test ngay lập tức.
+- [x] Thiết kế giao diện Đăng ký `RegisterScreen`: Đăng ký tài khoản mới với họ tên, email, mật khẩu, xác nhận mật khẩu.
+- [x] Thiết kế giao diện Hồ sơ cá nhân `ProfileScreen`: Hiển thị avatar ký tự viết tắt, thông tin tài khoản, chỉnh sửa tên hiển thị, tùy chỉnh theme Sáng/Tối, nút Đăng xuất an toàn.
+- [x] Mở rộng thanh điều hướng `MainNavigationScreen` với Tab thứ 4 "Hồ sơ" (Profile).
 
-### 3. Thiết kế & Triển khai Models (`lib/models/`)
-- [x] `subject.dart`: Model quản lý thông tin môn học (ID, tên, mã màu, icon, mục tiêu giờ học hàng tuần).
-- [x] `study_session.dart`: Model lưu trữ phiên học đã hoàn thành (môn học, thời lượng, thời gian hoàn thành, chế độ học).
-- [x] `study_task.dart`: Model quản lý nhiệm vụ, bài tập cần làm kèm hạn nộp (Deadline) và trạng thái hoàn thành.
+### 3. Chức Năng 3.10: Cơ Chế Bảo Mật (App Lock PIN & Background Auto-Lock)
+- [x] Triển khai dịch vụ bảo mật `SecurityService`: Băm mã PIN một chiều bằng kỹ thuật Salted Hash (`StudyTracker_Secure_Salt_2026`) chống lộ dữ liệu.
+- [x] Triển khai `SecurityProvider`: Quản lý trạng thái khóa `isLocked`, cờ kích hoạt PIN `isPinEnabled`, cờ tự động khóa ngầm `autoLockOnBackground`, đếm số lần thử sai.
+- [x] Thiết kế màn hình khóa `PinLockScreen`: Bàn phím số Numpad cảm ứng mượt mà, chấm tròn PIN đổi màu theo tiến trình nhập, hỗ trợ 2 chế độ:
+  - `PinLockMode.unlock`: Mở khóa ứng dụng.
+  - `PinLockMode.setup`: Tạo mới hoặc thay đổi mã PIN (quy trình 2 bước: Nhập lần 1 -> Xác nhận lại lần 2).
+- [x] **Cơ chế tự động khóa màn hình khi app chuyển sang chạy ngầm (Background Auto-Lock):**
+  - Xây dựng `AppLockWrapper` bọc ở tầng cao nhất của ứng dụng, lắng nghe sự kiện vòng đời `WidgetsBindingObserver`.
+  - Khi ứng dụng chuyển sang chế độ chạy ngầm (`AppLifecycleState.paused` / `inactive`), tự động kích hoạt `lockApp()`.
+  - Khi người dùng mở lại app (`AppLifecycleState.resumed`), giao diện lập tức bị khóa và yêu cầu nhập mã PIN bảo mật.
 
-### 4. Triển khai Logic & Quản lý Trạng thái (`lib/providers/`)
-- [x] `study_provider.dart`:
-  - Đọc/ghi dữ liệu tự động với `SharedPreferences` dưới định dạng JSON.
-  - Cung cấp sẵn các môn học mẫu ban đầu (Toán học, Lập trình, Tiếng Anh, Khoa học).
-  - Tính toán số liệu thống kê: tổng thời gian học hôm nay, tuần này, chuỗi ngày liên tục (streak), thời gian học từng môn.
-  - Xử lý thêm/sửa/xóa môn học, thêm phiên học, thêm/hoàn thành/xóa nhiệm vụ.
-  - Tính mảng 7 ngày trong tuần cho biểu đồ `fl_chart`.
-- [x] `pomodoro_provider.dart`:
-  - Đồng hồ đếm ngược với 3 chế độ: **Tập trung** (25 phút), **Nghỉ ngắn** (5 phút), **Nghỉ dài** (15 phút sau mỗi 4 chu kỳ).
-  - Tự động lưu phiên học vào `StudyProvider` khi hoàn thành phiên tập trung.
-  - Đầy đủ các thao tác: Bắt đầu, Tạm dừng, Đặt lại (Reset), Bỏ qua (Skip).
+### 4. Tài Liệu, Quản Lý Dự Án & Phân Nhánh Git (Git Flow)
+- [x] Soạn thảo tài liệu kiến trúc & bảo mật chi tiết: `docs/ARCHITECTURE_AND_SECURITY.md`.
+- [x] Soạn thảo hướng dẫn chiến lược phân nhánh Git Flow & làm việc nhóm: `docs/GIT_FLOW_AND_TEAM_GUIDE.md`.
+- [x] Xây dựng bảng theo dõi tiến độ công việc và phân chia trách nhiệm cho các thành viên trong nhóm.
+- [x] Quy ước Commit Messages chuẩn Conventional Commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`).
 
-### 5. Xây dựng Giao diện Người dùng (`lib/screens/` & `lib/widgets/`)
-- [x] `pomodoro_timer_widget.dart`: Vòng tròn tiến độ trực quan, bộ đếm mm:ss, menu chọn môn học cần học, các nút điều khiển.
-- [x] `daily_stats_card.dart`: Thẻ thống kê 3 chỉ số nhanh trong ngày (thời gian học hôm nay, số phiên Pomodoro, chuỗi ngày streak).
-- [x] `subject_card.dart`: Thẻ môn học kèm thanh tiến độ % hoàn thành mục tiêu học tập theo tuần.
-- [x] `home_screen.dart`: Màn hình trang chủ tích hợp thẻ thống kê, đồng hồ Pomodoro, danh sách môn học và hộp thoại thêm môn học mới.
-- [x] `statistics_screen.dart`: Màn hình thống kê với biểu đồ cột thời gian học từng ngày trong tuần và lịch sử các phiên học gần nhất.
-- [x] `tasks_screen.dart`: Màn hình quản lý danh sách việc cần làm, phân loại Đang làm / Đã hoàn thành, hộp thoại thêm việc mới.
-- [x] `main_navigation_screen.dart`: Thanh điều hướng `NavigationBar` chuẩn Material 3 chuyển đổi mượt mà giữa 3 màn hình.
-- [x] `main.dart`: Thiết lập `MultiProvider`, cấu hình chủ đề giao diện Sáng/Tối (Light & Dark Theme).
-
-### 6. Kiểm thử & Đồng bộ Git
-- [x] Chạy phân tích tĩnh `flutter analyze`: **No issues found** (0 warnings, 0 errors).
-- [x] Chạy kiểm thử tự động `flutter test`: Toàn bộ test case trong `test/widget_test.dart` vượt qua thành công (**All tests passed**).
-- [x] Lưu các commit có cấu trúc vào Git local.
-- [x] Push toàn bộ mã nguồn lên kho chứa từ xa `origin/main` trên GitHub.
+### 5. Kiểm Thử & Đảm Bảo Chất Lượng
+- [x] Viết bộ Unit Test toàn diện `test/auth_and_security_test.dart` kiểm tra `AuthService`, `AuthProvider`, `SecurityService`, `SecurityProvider`.
+- [x] Đảm bảo vượt qua 100% test cases: `flutter test` (5/5 tests passed).
+- [x] Phân tích tĩnh mã nguồn `flutter analyze`: **No issues found** (0 errors, 0 warnings).
 
 ### 7. Quản lý Điểm số (Chức năng 3.5)
 - [x] Lưu nhiều đầu điểm cho từng môn học trên thiết bị.
@@ -87,24 +92,51 @@
 
 ---
 
-## 📁 Sơ Đồ Cấu Trúc Tệp Tin Dự Án
+## 📁 Sơ Đồ Cấu Trúc Dự Án
 
 ```text
-STUDY TRACKER/
+STUDY-TRACKER/
+├── docs/
+│   ├── ARCHITECTURE_AND_SECURITY.md
+│   └── GIT_FLOW_AND_TEAM_GUIDE.md
 ├── lib/
+│   ├── core/
+│   │   ├── constants/
+│   │   │   ├── app_colors.dart
+│   │   │   ├── app_constants.dart
+│   │   │   └── app_typography.dart
+│   │   ├── services/
+│   │   │   ├── auth_service.dart
+│   │   │   └── security_service.dart
+│   │   ├── theme/
+│   │   │   ├── app_theme.dart
+│   │   │   └── theme_provider.dart
+│   │   └── widgets/
+│   │       ├── app_lock_wrapper.dart
+│   │       ├── custom_button.dart
+│   │       ├── custom_dialog.dart
+│   │       └── custom_text_field.dart
 │   ├── models/
 │   │   ├── grade_entry.dart
 │   │   ├── study_session.dart
 │   │   ├── study_task.dart
-│   │   └── subject.dart
-│   ├── providers/
+│   │   ├── subject.dart
+│   │   └── user_model.dart
+│   ├── providers/feature/auth-security
+│   │   ├── auth_provider.dart
 │   │   ├── cloud_sync_provider.dart
+ main
 │   │   ├── pomodoro_provider.dart
+│   │   ├── security_provider.dart
 │   │   └── study_provider.dart
 │   ├── screens/
 │   │   ├── cloud_sync_screen.dart
 │   │   ├── home_screen.dart
+│   │   ├── login_screen.dart
 │   │   ├── main_navigation_screen.dart
+│   │   ├── pin_lock_screen.dart
+│   │   ├── profile_screen.dart
+│   │   ├── register_screen.dart
 │   │   ├── statistics_screen.dart
 │   │   └── tasks_screen.dart
 │   ├── services/
@@ -115,13 +147,13 @@ STUDY TRACKER/
 │   │   └── subject_card.dart
 │   └── main.dart
 ├── test/
+│   ├── auth_and_security_test.dart
 │   └── widget_test.dart
-├── .gitignore
 ├── COMPLETED_TASKS.md
-├── LICENSE
-├── pubspec.yaml
 └── README.md
 ```
+ feature/auth-security
+
 
 ---
 
@@ -139,3 +171,4 @@ STUDY TRACKER/
 - [ ] Tùy chỉnh độ dài thời gian tập trung & thời gian nghỉ theo ý thích người dùng.
 - [x] Triển khai Cloud Sync Engine qua Firebase (cần cấu hình Firebase project để sử dụng).
 - [ ] Xuất báo cáo học tập định dạng PDF / Excel.
+ main

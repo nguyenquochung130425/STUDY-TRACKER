@@ -1,21 +1,34 @@
-# 📚 Study Tracker
+# 📚 Study Tracker - Ứng Dụng Quản Lý Học Tập & Bảo Mật Cá Nhân
 
-Ứng dụng di động theo dõi thời gian học tập, quản lý môn học và nâng cao hiệu suất cá nhân, được xây dựng trên nền tảng **Flutter** & **Dart**.
-
----
-
-## 🌟 Giới thiệu
-
-**Study Tracker** là công cụ đắc lực hỗ trợ học sinh, sinh viên và người tự học thiết lập kỷ luật, theo dõi tiến độ học tập và tối ưu hóa thời gian mỗi ngày. Ứng dụng kết hợp phương pháp học tập khoa học (Pomodoro) với hệ thống báo cáo trực quan giúp bạn nắm bắt rõ ràng mức độ tập trung và sự tiến bộ của bản thân.
+Ứng dụng di động theo dõi thời gian học tập, quản lý môn học, phương pháp Pomodoro và bảo mật thông tin cá nhân, được xây dựng trên nền tảng **Flutter 3.47.5** & **Dart 3.13.4**.
 
 ---
 
-## ✨ Tính năng nổi bật
+## 🌟 Giới Thiệu Dự Án
 
-- ⏱️ **Đồng hồ bấm giờ & Phương pháp Pomodoro**
-  - Đồng hồ đếm xuôi (Stopwatch) và đếm ngược (Countdown) cho từng phiên học.
-  - Chế độ Pomodoro chuẩn khoa học: 25 phút tập trung, 5 phút nghỉ ngắn, nghỉ dài sau 4 chu kỳ.
-  - Ghi nhận tự động thời gian thực tế đã học vào lịch sử.
+**Study Tracker** là giải pháp toàn diện hỗ trợ học sinh, sinh viên và người tự học thiết lập kỷ luật, theo dõi tiến độ học tập và tối ưu hóa thời gian mỗi ngày. Ứng dụng kết hợp phương pháp học tập khoa học (Pomodoro) với hệ thống báo cáo trực quan và cơ chế bảo mật nâng cao (Khóa mã PIN & Tự động khóa khi chạy ngầm).
+
+---
+
+## ✨ Các Tính Năng Đã Triển Khai
+
+### 1. 🔐 Xác Thực Người Dùng & Hồ Sơ Cá Nhân (Auth & Profile - Chức năng 3.1)
+- **Đăng ký tài khoản mới (`RegisterScreen`):** Kiểm tra định dạng email, mật khẩu tối thiểu 6 ký tự, xác nhận mật khẩu.
+- **Đăng nhập (`LoginScreen`):** Đăng nhập nhanh với tài khoản cá nhân hoặc nút **"Dùng thử tài khoản Demo"** tiện lợi để trải nghiệm ngay.
+- **Quản lý hồ sơ (`ProfileScreen`):** Hiển thị avatar ký tự viết tắt, thông tin tài khoản, ngày tham gia, chỉnh sửa tên hiển thị.
+- **Đăng xuất an toàn:** Hộp thoại `CustomDialog.showConfirm` cảnh báo trước khi đăng xuất.
+
+ feature/auth-security
+### 2. 🛡️ Cơ Chế Bảo Mật Ứng Dụng (Security - Chức năng 3.10)
+- **Khóa ứng dụng bằng mã PIN (App Lock):** Mã PIN gồm 4 số được băm một chiều kèm chuỗi Salt bí mật (`Salted Hashing`) an toàn.
+- **Bàn phím ảo chuyên dụng (`PinLockScreen`):** Giao diện Numpad cảm ứng mượt mà, hỗ trợ quy trình 2 bước khi thiết lập/đổi PIN.
+- **Tự động khóa màn hình khi app chạy ngầm (Background Auto-Lock):** Giám sát trạng thái vòng đời ứng dụng qua `WidgetsBindingObserver`. Khi người dùng ẩn app hoặc chuyển ứng dụng, hệ thống lập tức khóa lại để bảo vệ thông tin học tập.
+
+### 3. 🎨 Kiến Trúc Nền Tảng & Hệ Thống Thiết Kế (Base Architecture & Design System)
+- **Kiến trúc Feature-first kết hợp Core-shared:** Tách bạch rõ ràng `core/`, `models/`, `providers/`, `screens/`, `widgets/`.
+- **Hệ thống bảng màu (`AppColors`) & Typography (`AppTypography`):** Hỗ trợ đầy đủ **Light Mode** & **Dark Mode**.
+- **Chuyển đổi giao diện linh hoạt:** Cho phép chọn giữa Sáng, Tối hoặc Tự động theo hệ điều hành qua `ThemeProvider`.
+- **Bộ UI Components dùng chung:** `CustomButton`, `CustomTextField`, `CustomDialog`, `AppLockWrapper`.
 
 - 📖 **Quản lý môn học & Mục tiêu**
   - Thêm, sửa, xóa môn học với màu sắc và biểu tượng nhận diện riêng biệt.
@@ -25,20 +38,12 @@
   - Tổng hợp thời lượng và số phiên học trong tuần, biểu đồ thời gian học theo từng ngày trong tuần.
   - Xem lịch sử phiên học gần đây và tiến độ mục tiêu của từng môn.
   - Quản lý đầu điểm: thêm, sửa, xóa; tính điểm trung bình có trọng số trên thang 10 và xem biểu đồ điểm.
-  - Theo dõi chuỗi ngày học liên tục (Study Streak).
+  - Theo dõi chuỗi ngày học liên tục (Study Streak). main
 
-- 📝 **Quản lý nhiệm vụ (Tasks & To-Do)**
-  - Lên danh sách bài tập, đồ án cùng hạn nộp (Deadline).
-  - Phân loại nhiệm vụ theo mức độ ưu tiên và môn học liên quan.
-
-- 🔔 **Nhắc nhở & Thông báo**
-  - Tự động thông báo nhắc nhở khi đến giờ học đã lên lịch.
-  - Thông báo động viên duy trì chuỗi học tập hàng ngày.
-
-- 🎨 **Giao diện & Trải nghiệm người dùng**
-  - Thiết kế hiện đại theo chuẩn Material 3.
-  - Hỗ trợ chế độ Sáng / Tối (Light Mode & Dark Mode).
-  - Hoạt động mượt mà cả khi không có kết nối mạng (Offline-first).
+### 4. ⏱️ Đồng Hồ Pomodoro & Thống Kê Học Tập
+- **Phương pháp Pomodoro:** 25 phút tập trung, 5 phút nghỉ ngắn, 15 phút nghỉ dài.
+- **Biểu đồ thống kê:** Trực quan hóa dữ liệu học tập trong tuần với `fl_chart`.
+- **Quản lý danh sách nhiệm vụ (Tasks):** Thêm, đánh dấu hoàn thành, phân loại việc cần làm kèm hạn nộp.
 
 - ☁️ **Đồng bộ dữ liệu đám mây**
   - Đăng ký/đăng nhập bằng email và Google khi đã cấu hình Firebase.
@@ -46,72 +51,65 @@
 
 ---
 
-## 🛠️ Công nghệ sử dụng
+## 📖 Tài Liệu Hướng Dẫn Kỹ Thuật
 
-| Thành phần | Công nghệ / Thư viện đề xuất |
-| :--- | :--- |
-| **Nền tảng** | [Flutter](https://flutter.dev/) (Dart SDK >= 3.0) |
-| **Quản lý trạng thái (State)** | `provider` / `flutter_riverpod` / `flutter_bloc` |
-| **Cơ sở dữ liệu cục bộ** | `hive` / `isar` / `sqflite` |
-| **Biểu đồ thống kê** | `fl_chart` |
-| **Lưu cấu hình nhẹ** | `shared_preferences` |
-| **Thông báo nội bộ** | `flutter_local_notifications` |
+- 🏛️ [Tài liệu Kiến trúc Nền tảng & Cơ chế Bảo mật](docs/ARCHITECTURE_AND_SECURITY.md)
+- 🚀 [Chiến lược Phân nhánh Git Flow & Hướng dẫn Nhóm](docs/GIT_FLOW_AND_TEAM_GUIDE.md)
+- 📋 [Báo cáo Công việc Đã hoàn thành](COMPLETED_TASKS.md)
 
 ---
 
-## 📂 Cấu trúc thư mục dự kiến
+## 📂 Sơ Đồ Cấu Trúc Thư Mục
 
 ```text
-study_tracker/
+STUDY-TRACKER/
+├── docs/                                # Tài liệu kỹ thuật & quản lý dự án
+│   ├── ARCHITECTURE_AND_SECURITY.md
+│   └── GIT_FLOW_AND_TEAM_GUIDE.md
 ├── lib/
-│   ├── core/                  # Tiện ích dùng chung, hằng số, chủ đề giao diện (Theme)
-│   │   ├── constants/         # Màu sắc, chuỗi ký tự, kích thước
-│   │   ├── theme/             # Cấu hình Light/Dark Theme
-│   │   └── utils/             # Hàm tiện ích (định dạng ngày giờ, chuyển đổi dữ liệu)
-│   ├── data/                  # Xử lý dữ liệu & lưu trữ
-│   │   ├── models/            # Model: Subject, Session, Task, Goal
-│   │   ├── providers/         # Database helper (Hive / SQLite)
-│   │   └── repositories/      # Kho chứa dữ liệu trừu tượng
-│   ├── logic/                 # Quản lý logic nghiệp vụ và trạng thái (State Management)
-│   │   ├── timer/             # Logic đếm giờ, chu kỳ Pomodoro
-│   │   ├── subject/           # Logic môn học
-│   │   └── analytics/         # Logic tổng hợp số liệu
-│   ├── presentation/          # Giao diện người dùng (UI)
-│   │   ├── screens/           # Các màn hình chính (Home, Timer, Statistics, Tasks, Settings)
-│   │   └── widgets/           # Các widget tái sử dụng (TimerCard, SubjectTile, ChartView, ...)
-│   └── main.dart              # Điểm khởi chạy ứng dụng
-├── assets/                    # Hình ảnh, biểu tượng, phông chữ
-├── test/                      # Unit test & Widget test
-├── pubspec.yaml               # Danh sách thư viện và cấu hình dự án
+│   ├── core/                            # Nền tảng dùng chung
+│   │   ├── constants/                   # Colors, Typography, Constants
+│   │   ├── services/                    # AuthService, SecurityService
+│   │   ├── theme/                       # AppTheme, ThemeProvider
+│   │   └── widgets/                     # CustomButton, CustomTextField, CustomDialog, AppLockWrapper
+│   ├── models/                          # Data Models
+│   ├── providers/                       # State Management (Provider)
+│   ├── screens/                         # Màn hình (Login, Register, Profile, PinLock, Home, ...)
+│   ├── widgets/                         # Các widget nghiệp vụ
+│   └── main.dart                        # MultiProvider & Entrypoint
+├── test/
+│   ├── auth_and_security_test.dart      # Unit tests cho Auth & Security
+│   └── widget_test.dart                 # Widget tests
+├── pubspec.yaml
 └── README.md
 ```
 
 ---
 
-## 🚀 Hướng dẫn cài đặt & Khởi chạy
+## 🚀 Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
 
-### Yêu cầu tiên quyết
-- Đã cài đặt [Flutter SDK](https://docs.flutter.dev/get-started/install) (phiên bản `>= 3.10.0`).
-- Đã cấu hình Android Studio, Xcode (nếu dùng macOS) hoặc VS Code với Flutter Extension.
-
-### Các bước thực hiện
-
-1. **Clone dự án về máy:**
+1. **Clone dự án:**
    ```bash
    git clone https://github.com/nguyenquochung130425/STUDY-TRACKER.git
-   cd "STUDY TRACKER"
+   cd STUDY-TRACKER
    ```
 
-2. **Cài đặt các gói phụ thuộc (Dependencies):**
+2. **Cài đặt thư viện:**
    ```bash
    flutter pub get
    ```
 
-3. **Chạy ứng dụng:**
+3. **Chạy kiểm thử & phân tích mã nguồn:**
+   ```bash
+   flutter analyze   # Đạt: No issues found!
+   flutter test      # Đạt: All tests passed! (5/5 tests)
+   ```
+
+ feature/auth-security
+4. **Khởi chạy ứng dụng:**
    ```bash
    flutter run
    ```
-
 ### Cấu hình Firebase cho Cloud Sync
 
 Cloud Sync cần một Firebase project riêng. Khi chưa cấu hình, ứng dụng vẫn hoạt
@@ -271,9 +269,11 @@ Chi tiết đầy đủ về mô hình branch, thiết lập quyền nhánh trê
 - [x] Triển khai Cloud Sync Engine với Firebase Authentication và Firestore
 - [x] Cấu hình Firebase Web project riêng để sử dụng đồng bộ cloud thực tế
 - [ ] Cấu hình App ID Firebase cho Android/iOS/macOS nếu cần triển khai các nền tảng này
+ main
 
 ---
 
-## 📄 Giấy phép (License)
-
-Dự án được phân phối dưới giấy phép [MIT License](LICENSE). Xem tệp [LICENSE](file:///d:/STUDY%20TRACKER/LICENSE) để biết thêm chi tiết.
+## 🔑 Tài Khoản Demo Mặc Định
+- **Email:** `demo@studytracker.com`
+- **Mật khẩu:** `password123`
+*(Hoặc nhấn nút "Dùng thử tài khoản Demo" trên màn hình Đăng nhập để trải nghiệm ngay).*
