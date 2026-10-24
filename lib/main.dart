@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'core/theme/app_theme.dart';
+import 'features/app_lock/app_lock_gate.dart';
+import 'features/app_lock/app_lock_provider.dart';
+import 'features/app_lock/app_lock_storage.dart';
 import 'providers/cloud_sync_provider.dart';
 import 'providers/pomodoro_provider.dart';
 import 'providers/study_provider.dart';
@@ -47,20 +51,23 @@ Future<void> main() async {
 class StudyTrackerApp extends StatelessWidget {
   final bool firebaseReady;
   final String? firebaseInitializationError;
+  final AppLockStorage? appLockStorage;
 
   const StudyTrackerApp({
     super.key,
     this.firebaseReady = false,
     this.firebaseInitializationError,
+    this.appLockStorage,
   });
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<StudyProvider>(
-          create: (_) => StudyProvider(),
+        ChangeNotifierProvider<AppLockProvider>(
+          create: (_) => AppLockProvider(storage: appLockStorage),
         ),
+        ChangeNotifierProvider<StudyProvider>(create: (_) => StudyProvider()),
         ChangeNotifierProvider<CloudSyncProvider>(
           create: (context) => CloudSyncProvider(
             studyProvider: context.read<StudyProvider>(),
@@ -79,27 +86,11 @@ class StudyTrackerApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Study Tracker',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5),
-            brightness: Brightness.light,
-          ),
-          cardTheme: const CardThemeData(
-            elevation: 0,
-          ),
-        ),
-        darkTheme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF3F51B5),
-            brightness: Brightness.dark,
-          ),
-          cardTheme: const CardThemeData(
-            elevation: 0,
-          ),
-        ),
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
+        builder: (context, child) =>
+            AppLockGate(child: child ?? const SizedBox.shrink()),
         home: const MainNavigationScreen(),
       ),
     );

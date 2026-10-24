@@ -4,7 +4,7 @@
 - **Kho lưu trữ:** [https://github.com/nguyenquochung130425/STUDY-TRACKER.git](https://github.com/nguyenquochung130425/STUDY-TRACKER.git)
 - **Nhánh chính:** `main`
 - **Công nghệ nền tảng:** Flutter 3.47.5 & Dart 3.13.4
-- **Cập nhật ngày:** 21/10/2026
+- **Cập nhật ngày:** 24/10/2026
 
 ---
 
@@ -72,6 +72,18 @@
 - [x] Gộp dữ liệu theo thời điểm cập nhật và lưu dấu xóa để không khôi phục bản ghi đã xóa.
 - [x] Cấu hình Firebase Web project trong `firebase_config.json` cục bộ; xác minh build Web thành công.
 - [ ] Bổ sung Firebase App ID cho Android/iOS/macOS nếu cần dùng đồng bộ trên các nền tảng này.
+
+### 10. Kiến trúc, Auth, Security & Git Flow
+- [x] Thiết lập Provider, theme Light/Dark, bảng màu, typography và shared widgets.
+- [x] Tạo feature service cho Auth và tích hợp vào `CloudSyncProvider`.
+- [x] Bổ sung xác minh email, chặn cloud sync khi email chưa xác minh và đặt lại mật khẩu.
+- [x] Tách Flutter App Lock PIN khỏi Firebase Auth; lưu PIN bằng secure storage và tự khóa khi ứng dụng không còn active.
+- [x] Thêm Firestore rules giới hạn dữ liệu theo UID và cấu hình `firebase.json`.
+- [x] Thêm PR template, task issue template, Git Flow guide và CI cho analyzer/tests.
+- [x] Bổ sung unit tests cho analytics và logic quyết định ghi cloud.
+- [ ] Triển khai Firestore rules vào Firebase project và xác minh bằng Emulator Suite.
+- [ ] Bật branch protection cho `main`/`develop` và tạo GitHub Project board.
+- [ ] Chuyển toàn bộ màn hình/provider cũ sang feature-first; hiện app vẫn dùng cấu trúc chuyển tiếp.
 
 ---
 

@@ -5,13 +5,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 
+import '../features/auth/auth_service.dart';
+import '../features/cloud_sync/cloud_sync_service.dart';
 import 'study_provider.dart';
 
 class CloudSyncProvider extends ChangeNotifier {
-  static const _collections = ['subjects', 'sessions', 'tasks', 'grades'];
+  static const _collections = CloudSyncService.collections;
 
   final StudyProvider _studyProvider;
-  final FirebaseAuth? _auth;
+  final StudyAuthService? _authService;
   final FirebaseFirestore? _firestore;
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
@@ -25,14 +27,17 @@ class CloudSyncProvider extends ChangeNotifier {
     required StudyProvider studyProvider,
     required bool firebaseReady,
     String? initializationError,
-  })  : // Keep the public named parameter while storing the provider privately.
-        // ignore: prefer_initializing_formals
-        _studyProvider = studyProvider,
-        _auth = firebaseReady ? FirebaseAuth.instance : null,
-        _firestore = firebaseReady ? FirebaseFirestore.instance : null,
-        configurationError = initializationError {
-    if (_auth != null) {
-      _authSubscription = _auth.authStateChanges().listen(
+  }) : // Keep the public named parameter while storing the provider privately.
+       // ignore: prefer_initializing_formals
+       _studyProvider = studyProvider,
+       _authService = firebaseReady
+           ? FirebaseStudyAuthService(auth: FirebaseAuth.instance)
+           : null,
+       _firestore = firebaseReady ? FirebaseFirestore.instance : null,
+       configurationError = initializationError {
+    final authService = _authService;
+    if (authService != null) {
+      _authSubscription = authService.authStateChanges.listen(
         (user) {
           _user = user;
           _syncError = null;
@@ -46,8 +51,7 @@ class CloudSyncProvider extends ChangeNotifier {
           notifyListeners();
         },
       );
-      _connectivitySubscription =
-          Connectivity().onConnectivityChanged.listen(
+      _connectivitySubscription = Connectivity().onConnectivityChanged.listen(
         (results) {
           if (_user != null &&
               results.any((result) => result != ConnectivityResult.none)) {
@@ -69,38 +73,43 @@ class CloudSyncProvider extends ChangeNotifier {
   bool get isSyncing => _isSyncing;
   String? get syncError => _syncError;
   User? get user => _user;
+  bool get isEmailVerified => _user?.emailVerified ?? false;
   bool get canUseGoogleSignIn =>
       kIsWeb ||
       defaultTargetPlatform == TargetPlatform.android ||
       defaultTargetPlatform == TargetPlatform.iOS;
 
   Future<void> registerWithEmail(String email, String password) async {
-    final auth = _requireAuth();
-    await auth.createUserWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
+    final authService = _requireAuth();
+    await authService.registerWithEmail(email: email, password: password);
+    await authService.sendEmailVerification();
   }
 
   Future<void> signInWithEmail(String email, String password) async {
-    final auth = _requireAuth();
-    await auth.signInWithEmailAndPassword(
-      email: email.trim(),
-      password: password,
-    );
+    await _requireAuth().signInWithEmail(email: email, password: password);
   }
 
   Future<void> signInWithGoogle() async {
-    final auth = _requireAuth();
-    final provider = GoogleAuthProvider();
-    if (kIsWeb) {
-      await auth.signInWithPopup(provider);
-    } else if (canUseGoogleSignIn) {
-      await auth.signInWithProvider(provider);
-    } else {
+    if (!canUseGoogleSignIn) {
       throw UnsupportedError(
         'Đăng nhập Google hiện chỉ hỗ trợ Android, iOS và trình duyệt web.',
       );
+    }
+    await _requireAuth().signInWithGoogle();
+  }
+
+  Future<void> sendPasswordResetEmail(String email) =>
+      _requireAuth().sendPasswordResetEmail(email);
+
+  Future<void> resendEmailVerification() =>
+      _requireAuth().sendEmailVerification();
+
+  Future<void> refreshUser() async {
+    await _requireAuth().reloadCurrentUser();
+    _user = _requireAuth().currentUser;
+    notifyListeners();
+    if (_user?.emailVerified ?? false) {
+      await syncNow();
     }
   }
 
@@ -108,16 +117,16 @@ class CloudSyncProvider extends ChangeNotifier {
     await _requireAuth().signOut();
   }
 
-  FirebaseAuth _requireAuth() {
-    final auth = _auth;
-    if (auth == null) {
+  StudyAuthService _requireAuth() {
+    final authService = _authService;
+    if (authService == null) {
       throw FirebaseException(
         plugin: 'firebase_auth',
         code: 'not-configured',
         message: 'Firebase chưa được cấu hình cho ứng dụng.',
       );
     }
-    return auth;
+    return authService;
   }
 
   Future<void> syncNow() {
@@ -140,6 +149,13 @@ class CloudSyncProvider extends ChangeNotifier {
     final user = _user;
     final firestore = _firestore;
     if (user == null || firestore == null) return;
+    if (!user.emailVerified) {
+      _syncError =
+          'Hãy xác minh email trước khi đồng bộ dữ liệu. Kiểm tra hộp thư '
+          'hoặc gửi lại email xác minh.';
+      notifyListeners();
+      return;
+    }
 
     _isSyncing = true;
     _syncError = null;
@@ -148,17 +164,14 @@ class CloudSyncProvider extends ChangeNotifier {
       await _studyProvider.ready;
       final userRef = firestore.collection('users').doc(user.uid);
       final snapshots = await Future.wait<QuerySnapshot<Map<String, dynamic>>>(
-        _collections.map(
-          (name) => userRef.collection(name).get(),
-        ),
+        _collections.map((name) => userRef.collection(name).get()),
       );
       final remoteRecords = <String, Map<String, Map<String, dynamic>>>{
         for (final name in _collections) name: <String, Map<String, dynamic>>{},
       };
       final remoteModifiedAt = <String, DateTime>{};
-      final remoteDocuments = <
-          String,
-          Map<String, QueryDocumentSnapshot<Map<String, dynamic>>>>{};
+      final remoteDocuments =
+          <String, Map<String, QueryDocumentSnapshot<Map<String, dynamic>>>>{};
 
       for (var index = 0; index < _collections.length; index++) {
         final collection = _collections[index];
@@ -176,8 +189,9 @@ class CloudSyncProvider extends ChangeNotifier {
           documents[document.id] = document;
           final modified = data['updatedAt'];
           if (modified is Timestamp) {
-            remoteModifiedAt['$collection/${document.id}'] =
-                modified.toDate().toUtc();
+            remoteModifiedAt['$collection/${document.id}'] = modified
+                .toDate()
+                .toUtc();
           }
         }
         remoteDocuments[collection] = documents;
@@ -185,9 +199,8 @@ class CloudSyncProvider extends ChangeNotifier {
 
       final deletionSnapshot = await userRef.collection('deletions').get();
       final remoteDeletedRecords = <String, DateTime>{};
-      final remoteDeletionDocuments = <
-          String,
-          QueryDocumentSnapshot<Map<String, dynamic>>>{};
+      final remoteDeletionDocuments =
+          <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
       for (final document in deletionSnapshot.docs) {
         final data = document.data();
         final collection = data['collection'];
@@ -222,7 +235,10 @@ class CloudSyncProvider extends ChangeNotifier {
           final deletedAt = localDeletedRecords[key];
           final document = remoteDocuments[collection]![entry.key];
           final remoteDeletedAt = remoteDeletedRecords[key];
-          final modifiedAt = _studyProvider.modifiedAtFor(collection, entry.key);
+          final modifiedAt = _studyProvider.modifiedAtFor(
+            collection,
+            entry.key,
+          );
 
           if (deletedAt != null &&
               (modifiedAt == null || !modifiedAt.isAfter(deletedAt))) {
@@ -240,12 +256,17 @@ class CloudSyncProvider extends ChangeNotifier {
           final currentData = document?.data();
           final currentBody = currentData?['data'];
           final remoteUpdatedAt = currentData?['updatedAt'];
-          final shouldWrite = document == null ||
-              currentBody is! Map<String, dynamic> ||
-              !mapEquals(currentBody, entry.value) ||
-              (modifiedAt != null &&
-                  remoteUpdatedAt is Timestamp &&
-                  modifiedAt.isAfter(remoteUpdatedAt.toDate()));
+          final shouldWrite = CloudSyncService.shouldWriteLocalRecord(
+            documentExists: document != null,
+            currentBody: currentBody is Map<String, dynamic>
+                ? currentBody
+                : null,
+            localBody: entry.value,
+            localModifiedAt: modifiedAt,
+            remoteUpdatedAt: remoteUpdatedAt is Timestamp
+                ? remoteUpdatedAt
+                : null,
+          );
 
           if (shouldWrite) {
             await batchWriter.set(
@@ -295,12 +316,13 @@ class CloudSyncProvider extends ChangeNotifier {
           final recordId = entry.key.substring(separator + 1);
           final deletionId =
               '${Uri.encodeComponent(collection)}_${Uri.encodeComponent(recordId)}';
-          final localModified =
-              _studyProvider.modifiedAtFor(collection, recordId);
+          final localModified = _studyProvider.modifiedAtFor(
+            collection,
+            recordId,
+          );
           final item = remoteDocuments[collection]![recordId];
           if (item != null &&
-              (localModified == null ||
-                  !localModified.isAfter(entry.value))) {
+              (localModified == null || !localModified.isAfter(entry.value))) {
             await batchWriter.delete(item.reference);
           } else if (localModified != null &&
               localModified.isAfter(entry.value)) {
@@ -356,9 +378,7 @@ class _FirestoreBatchWriter {
     _operationCount++;
   }
 
-  Future<void> delete(
-    DocumentReference<Map<String, dynamic>> reference,
-  ) async {
+  Future<void> delete(DocumentReference<Map<String, dynamic>> reference) async {
     await _prepare();
     _batch.delete(reference);
     _operationCount++;

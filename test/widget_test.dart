@@ -1,12 +1,38 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:study_tracker/features/app_lock/app_lock_storage.dart';
 import 'package:study_tracker/main.dart';
 
+class _MemoryAppLockStorage implements AppLockStorage {
+  AppLockSecurityState _securityState = const AppLockSecurityState();
+
+  @override
+  Future<String?> readPin() async => null;
+
+  @override
+  Future<AppLockSecurityState> readSecurityState() async => _securityState;
+
+  @override
+  Future<void> writePin(String pin) async {}
+
+  @override
+  Future<void> deletePin() async {}
+
+  @override
+  Future<void> writeSecurityState(AppLockSecurityState state) async {
+    _securityState = state;
+  }
+}
+
 void main() {
-  testWidgets('StudyTrackerApp loads successfully test', (WidgetTester tester) async {
+  testWidgets('StudyTrackerApp loads successfully test', (
+    WidgetTester tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
 
-    await tester.pumpWidget(const StudyTrackerApp());
+    await tester.pumpWidget(
+      StudyTrackerApp(appLockStorage: _MemoryAppLockStorage()),
+    );
     await tester.pumpAndSettle();
 
     // Xác nhận giao diện hiển thị đúng tiêu đề chính

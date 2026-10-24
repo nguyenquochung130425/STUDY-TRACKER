@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../core/widgets/app_button.dart';
+import '../core/widgets/app_text_field.dart';
 import '../providers/cloud_sync_provider.dart';
 
 class CloudSyncScreen extends StatefulWidget {
@@ -13,6 +15,7 @@ class CloudSyncScreen extends StatefulWidget {
 
 class _CloudSyncScreenState extends State<CloudSyncScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _emailFieldKey = GlobalKey<FormFieldState<String>>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isRegistering = false;
@@ -76,16 +79,83 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
     }
   }
 
+  Future<void> _sendPasswordReset(CloudSyncProvider cloud) async {
+    if (!(_emailFieldKey.currentState?.validate() ?? false)) return;
+    setState(() {
+      _isSubmitting = true;
+      _authError = null;
+    });
+
+    try {
+      await cloud.sendPasswordResetEmail(_emailController.text);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Đã gửi liên kết đặt lại mật khẩu đến email của bạn.',
+            ),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (error) {
+      if (mounted) setState(() => _authError = _messageFor(error.code));
+    } on FirebaseException catch (error) {
+      if (mounted) setState(() => _authError = error.message ?? error.code);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _resendVerification(CloudSyncProvider cloud) async {
+    setState(() {
+      _isSubmitting = true;
+      _authError = null;
+    });
+    try {
+      await cloud.resendEmailVerification();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đã gửi lại email xác minh.')),
+        );
+      }
+    } on FirebaseAuthException catch (error) {
+      if (mounted) setState(() => _authError = _messageFor(error.code));
+    } on FirebaseException catch (error) {
+      if (mounted) setState(() => _authError = error.message ?? error.code);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  Future<void> _refreshVerification(CloudSyncProvider cloud) async {
+    setState(() {
+      _isSubmitting = true;
+      _authError = null;
+    });
+    try {
+      await cloud.refreshUser();
+    } on FirebaseAuthException catch (error) {
+      if (mounted) setState(() => _authError = _messageFor(error.code));
+    } on FirebaseException catch (error) {
+      if (mounted) setState(() => _authError = error.message ?? error.code);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
   String _messageFor(String code) => switch (code) {
-        'email-already-in-use' => 'Email này đã được đăng ký.',
-        'invalid-email' => 'Địa chỉ email không hợp lệ.',
-        'weak-password' => 'Mật khẩu cần có ít nhất 6 ký tự.',
-        'user-not-found' || 'wrong-password' || 'invalid-credential' =>
-          'Email hoặc mật khẩu không chính xác.',
-        'network-request-failed' => 'Không thể kết nối mạng. Hãy thử lại.',
-        'popup-closed-by-user' => 'Cửa sổ đăng nhập Google đã bị đóng.',
-        _ => 'Không thể đăng nhập ($code). Hãy thử lại.',
-      };
+    'email-already-in-use' => 'Email này đã được đăng ký.',
+    'invalid-email' => 'Địa chỉ email không hợp lệ.',
+    'weak-password' => 'Mật khẩu cần có ít nhất 6 ký tự.',
+    'user-not-found' ||
+    'wrong-password' ||
+    'invalid-credential' => 'Email hoặc mật khẩu không chính xác.',
+    'network-request-failed' => 'Không thể kết nối mạng. Hãy thử lại.',
+    'popup-closed-by-user' => 'Cửa sổ đăng nhập Google đã bị đóng.',
+    'too-many-requests' => 'Bạn thao tác quá nhanh. Hãy thử lại sau.',
+    'no-current-user' => 'Không tìm thấy tài khoản đang đăng nhập.',
+    _ => 'Không thể đăng nhập ($code). Hãy thử lại.',
+  };
 
   @override
   void dispose() {
@@ -126,8 +196,9 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
                           cloud.isConfigured
                               ? 'Firebase đã được cấu hình'
                               : 'Đang dùng dữ liệu cục bộ',
-                          style: theme.textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ],
@@ -137,10 +208,10 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
                     cloud.configurationError ??
                         (cloud.isConfigured
                             ? 'Dữ liệu được lưu trên thiết bị. Khi đăng nhập, '
-                                'môn học, phiên học, nhiệm vụ và điểm sẽ được '
-                                'đồng bộ với tài khoản Firebase.'
+                                  'môn học, phiên học, nhiệm vụ và điểm sẽ được '
+                                  'đồng bộ với tài khoản Firebase.'
                             : 'Cấu hình Firebase để bật đăng nhập và đồng bộ. '
-                                'Dữ liệu hiện tại vẫn được lưu trên thiết bị.'),
+                                  'Dữ liệu hiện tại vẫn được lưu trên thiết bị.'),
                   ),
                   if (!cloud.isConfigured) ...[
                     const SizedBox(height: 12),
@@ -161,7 +232,11 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
               child: ListTile(
                 leading: const CircleAvatar(child: Icon(Icons.person_outline)),
                 title: Text(cloud.user!.email ?? 'Tài khoản Google'),
-                subtitle: const Text('Đã đăng nhập'),
+                subtitle: Text(
+                  cloud.isEmailVerified
+                      ? 'Đã đăng nhập'
+                      : 'Đã đăng nhập · Email chưa được xác minh',
+                ),
                 trailing: IconButton(
                   tooltip: 'Đăng xuất',
                   onPressed: () => _signOut(cloud),
@@ -169,9 +244,51 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
                 ),
               ),
             ),
+            if (!cloud.isEmailVerified) ...[
+              const SizedBox(height: 12),
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Xác minh email để bật đồng bộ dữ liệu.'),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => _resendVerification(cloud),
+                            child: const Text('Gửi lại email'),
+                          ),
+                          TextButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => _refreshVerification(cloud),
+                            child: const Text('Tôi đã xác minh'),
+                          ),
+                        ],
+                      ),
+                      if (_authError != null) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          _authError!,
+                          style: TextStyle(color: theme.colorScheme.error),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             FilledButton.icon(
-              onPressed: cloud.isSyncing ? null : cloud.syncNow,
+              onPressed: cloud.isSyncing || !cloud.isEmailVerified
+                  ? null
+                  : cloud.syncNow,
               icon: cloud.isSyncing
                   ? const SizedBox(
                       width: 18,
@@ -179,11 +296,9 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : const Icon(Icons.sync),
-              label: Text(
-                cloud.isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ ngay',
-              ),
+              label: Text(cloud.isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ ngay'),
             ),
-            if (cloud.syncError != null) ...[
+            if (cloud.syncError != null && cloud.isEmailVerified) ...[
               const SizedBox(height: 12),
               Text(
                 'Đồng bộ thất bại: ${cloud.syncError}',
@@ -200,34 +315,35 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  TextFormField(
+                  AppTextField(
+                    key: _emailFieldKey,
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
-                    decoration: const InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(),
-                    ),
+                    labelText: 'Email',
+                    prefixIcon: const Icon(Icons.email_outlined),
                     validator: (value) {
                       final email = value?.trim() ?? '';
-                      if (!email.contains('@') || email.endsWith('@')) {
+                      if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                          .hasMatch(email)) {
                         return 'Nhập địa chỉ email hợp lệ.';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 12),
-                  TextFormField(
+                  AppTextField(
                     controller: _passwordController,
                     obscureText: true,
                     autofillHints: const [AutofillHints.password],
-                    decoration: const InputDecoration(
-                      labelText: 'Mật khẩu',
-                      border: OutlineInputBorder(),
-                    ),
+                    labelText: 'Mật khẩu',
+                    prefixIcon: const Icon(Icons.lock_outline),
                     validator: (value) {
-                      if ((value?.length ?? 0) < 6) {
-                        return 'Mật khẩu cần có ít nhất 6 ký tự.';
+                      if (_isRegistering && (value?.length ?? 0) < 8) {
+                        return 'Mật khẩu cần có ít nhất 8 ký tự.';
+                      }
+                      if (!_isRegistering && (value?.isEmpty ?? true)) {
+                        return 'Nhập mật khẩu.';
                       }
                       return null;
                     },
@@ -240,22 +356,29 @@ class _CloudSyncScreenState extends State<CloudSyncScreen> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _isSubmitting ? null : () => _submitEmail(cloud),
-                      child: Text(
-                        _isRegistering ? 'Tạo tài khoản' : 'Đăng nhập',
-                      ),
+                  AppButton(
+                    fullWidth: true,
+                    loading: _isSubmitting,
+                    icon: Icon(
+                      _isRegistering ? Icons.person_add_alt_1 : Icons.login,
                     ),
+                    label: _isRegistering ? 'Tạo tài khoản' : 'Đăng nhập',
+                    onPressed: _isSubmitting ? null : () => _submitEmail(cloud),
                   ),
+                  if (!_isRegistering)
+                    TextButton(
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => _sendPasswordReset(cloud),
+                      child: const Text('Quên mật khẩu?'),
+                    ),
                   TextButton(
                     onPressed: _isSubmitting
                         ? null
                         : () => setState(() {
-                              _isRegistering = !_isRegistering;
-                              _authError = null;
-                            }),
+                            _isRegistering = !_isRegistering;
+                            _authError = null;
+                          }),
                     child: Text(
                       _isRegistering
                           ? 'Đã có tài khoản? Đăng nhập'
