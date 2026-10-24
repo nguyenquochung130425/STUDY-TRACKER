@@ -8,6 +8,7 @@ import '../models/grade_entry.dart';
 import '../models/study_session.dart';
 import '../models/study_task.dart';
 import '../models/subject.dart';
+import '../services/study_notification_service.dart';
 
 class StudyProvider extends ChangeNotifier {
   static const String _subjectsKey = 'study_tracker_subjects';
@@ -24,10 +25,12 @@ class StudyProvider extends ChangeNotifier {
   final Map<String, DateTime> _modifiedAt = {};
   final Map<String, DateTime> _deletedRecords = {};
   final Completer<void> _readyCompleter = Completer<void>();
+  final StudyNotificationService? _notificationService;
   VoidCallback? _onLocalChange;
   bool _isLoading = true;
 
-  StudyProvider() {
+  StudyProvider({StudyNotificationService? notificationService})
+    : _notificationService = notificationService {
     _loadFromPreferences();
   }
 
@@ -158,6 +161,7 @@ class StudyProvider extends ChangeNotifier {
       _grades = decoded.map((item) => GradeEntry.fromJson(item)).toList();
     }
 
+    await _notificationService?.syncTasks(_tasks);
     _isLoading = false;
     notifyListeners();
     _readyCompleter.complete();
@@ -302,6 +306,7 @@ class StudyProvider extends ChangeNotifier {
     _tasks = merged['tasks']!.values.map(StudyTask.fromJson).toList();
     _grades = merged['grades']!.values.map(GradeEntry.fromJson).toList();
     await _persistAll();
+    await _notificationService?.syncTasks(_tasks);
     notifyListeners();
   }
 
@@ -418,7 +423,19 @@ class StudyProvider extends ChangeNotifier {
     await _markModified('tasks', task.id);
     _tasks.insert(0, task);
     await _saveTasks();
+    await _notificationService?.scheduleTaskReminders(task);
     _notifyLocalChange();
+  }
+
+  Future<void> updateTask(StudyTask updated) async {
+    final index = _tasks.indexWhere((task) => task.id == updated.id);
+    if (index != -1) {
+      await _markModified('tasks', updated.id);
+      _tasks[index] = updated;
+      await _saveTasks();
+      await _notificationService?.scheduleTaskReminders(updated);
+      _notifyLocalChange();
+    }
   }
 
   Future<void> toggleTaskCompletion(String id) async {
@@ -426,8 +443,17 @@ class StudyProvider extends ChangeNotifier {
     if (index != -1) {
       final task = _tasks[index];
       await _markModified('tasks', id);
-      _tasks[index] = task.copyWith(isCompleted: !task.isCompleted);
+      final updated = task.copyWith(isCompleted: !task.isCompleted);
+      _tasks[index] = updated;
       await _saveTasks();
+      if (updated.isCompleted) {
+        await _notificationService?.cancelTaskReminders(id);
+      } else {
+        await _notificationService?.scheduleTaskReminders(
+          updated,
+          requestPermission: false,
+        );
+      }
       _notifyLocalChange();
     }
   }
@@ -438,7 +464,18 @@ class StudyProvider extends ChangeNotifier {
     }
     _tasks.removeWhere((t) => t.id == id);
     await _saveTasks();
+    await _notificationService?.cancelTaskReminders(id);
     _notifyLocalChange();
+  }
+
+  double? getSubjectTaskCompletionRate(String subjectId) {
+    final subjectTasks = _tasks
+        .where((task) => task.subjectId == subjectId)
+        .toList();
+    if (subjectTasks.isEmpty) return null;
+
+    return subjectTasks.where((task) => task.isCompleted).length /
+        subjectTasks.length;
   }
 
   // --- ANALYTICS GETTERS ---
