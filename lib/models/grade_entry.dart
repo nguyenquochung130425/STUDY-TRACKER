@@ -38,4 +38,25 @@ class GradeEntry {
     weight: (json['weight'] as num).toDouble(),
     createdAt: DateTime.parse(json['createdAt'] as String),
   );
+
+  Map<String, dynamic> toDbMap() => {
+    'id': id,
+    'subject_id': subjectId,
+    'title': title,
+    'score': score,
+    'max_score': maxScore,
+    'weight': weight,
+    'created_at': createdAt.toIso8601String(),
+    'updated_at': DateTime.now().toIso8601String(),
+  };
+
+  factory GradeEntry.fromDbMap(Map<String, dynamic> map) => GradeEntry(
+    id: map['id'] as String,
+    subjectId: map['subject_id'] as String,
+    title: map['title'] as String,
+    score: (map['score'] as num).toDouble(),
+    maxScore: (map['max_score'] as num?)?.toDouble() ?? 10.0,
+    weight: (map['weight'] as num?)?.toDouble() ?? 10.0,
+    createdAt: DateTime.parse(map['created_at'] as String),
+  );
 }

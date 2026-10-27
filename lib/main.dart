@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/app_lock/app_lock_gate.dart';
@@ -10,6 +13,7 @@ import 'features/app_lock/app_lock_storage.dart';
 import 'providers/auth_provider.dart';
 import 'providers/cloud_sync_provider.dart';
 import 'providers/pomodoro_provider.dart';
+import 'providers/schedule_provider.dart';
 import 'providers/security_provider.dart';
 import 'providers/study_provider.dart';
 import 'screens/login_screen.dart';
@@ -18,6 +22,12 @@ import 'screens/main_navigation_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Khởi tạo SQLite FFI trên Desktop (Windows, Linux, macOS)
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
 
   var firebaseReady = false;
   String? firebaseInitializationError;
@@ -95,6 +105,9 @@ class StudyTrackerApp extends StatelessWidget {
             return (pomodoroProvider ?? PomodoroProvider())
               ..updateStudyProvider(studyProvider);
           },
+        ),
+        ChangeNotifierProvider<ScheduleProvider>(
+          create: (_) => ScheduleProvider(),
         ),
       ],
       child: Consumer2<ThemeProvider, AuthProvider>(

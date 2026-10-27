@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../core/database/database_helper.dart';
 import '../models/grade_entry.dart';
 import '../models/study_session.dart';
 import '../models/study_task.dart';
@@ -326,6 +327,9 @@ class StudyProvider extends ChangeNotifier {
   Future<void> addSubject(Subject subject) async {
     await _markModified('subjects', subject.id);
     _subjects.add(subject);
+    try {
+      await DatabaseHelper.instance.insertSubject(subject);
+    } catch (_) {}
     await _saveSubjects();
     _notifyLocalChange();
   }
@@ -335,17 +339,60 @@ class StudyProvider extends ChangeNotifier {
     if (index != -1) {
       await _markModified('subjects', updated.id);
       _subjects[index] = updated;
+      try {
+        await DatabaseHelper.instance.updateSubject(updated);
+      } catch (_) {}
       await _saveSubjects();
       _notifyLocalChange();
     }
   }
 
+  /// Đếm số lượng dữ liệu liên quan (lịch học, nhiệm vụ, điểm số) để cảnh báo người dùng
+  Future<Map<String, int>> getSubjectRelatedCounts(String id) async {
+    try {
+      return await DatabaseHelper.instance.getSubjectRelatedCounts(id);
+    } catch (_) {
+      final taskCount = _tasks.where((t) => t.subjectId == id).length;
+      final gradeCount = _grades.where((g) => g.subjectId == id).length;
+      return {
+        'schedules': 0,
+        'assignments': taskCount,
+        'grades': gradeCount,
+        'total': taskCount + gradeCount,
+      };
+    }
+  }
+
+  /// Xóa môn học và xử lý ràng buộc Cascade Delete:
+  /// - Tự động xóa khỏi SQLite (với FOREIGN KEY ON DELETE CASCADE dọn sạch schedules, assignments, grades)
+  /// - Đồng thời dọn dẹp các task và grade liên quan trong state của Provider
   Future<void> deleteSubject(String id) async {
     if (_subjects.any((subject) => subject.id == id)) {
       await _markDeleted('subjects', id);
     }
     _subjects.removeWhere((s) => s.id == id);
+
+    // Cascade delete in-memory tasks & grades
+    final tasksToRemove = _tasks.where((t) => t.subjectId == id).toList();
+    for (final task in tasksToRemove) {
+      await _markDeleted('tasks', task.id);
+    }
+    _tasks.removeWhere((t) => t.subjectId == id);
+
+    final gradesToRemove = _grades.where((g) => g.subjectId == id).toList();
+    for (final grade in gradesToRemove) {
+      await _markDeleted('grades', grade.id);
+    }
+    _grades.removeWhere((g) => g.subjectId == id);
+
+    // SQLite cascade delete
+    try {
+      await DatabaseHelper.instance.deleteSubject(id);
+    } catch (_) {}
+
     await _saveSubjects();
+    await _saveTasks();
+    await _saveGrades();
     _notifyLocalChange();
   }
 
@@ -439,6 +486,19 @@ class StudyProvider extends ChangeNotifier {
     _tasks.removeWhere((t) => t.id == id);
     await _saveTasks();
     _notifyLocalChange();
+  }
+
+  Future<void> updateTask(StudyTask updated) async {
+    final index = _tasks.indexWhere((t) => t.id == updated.id);
+    if (index != -1) {
+      await _markModified('tasks', updated.id);
+      _tasks[index] = updated;
+      try {
+        await DatabaseHelper.instance.updateAssignment(updated);
+      } catch (_) {}
+      await _saveTasks();
+      _notifyLocalChange();
+    }
   }
 
   // --- ANALYTICS GETTERS ---

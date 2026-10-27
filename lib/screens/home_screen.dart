@@ -2,86 +2,140 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../core/constants/app_colors.dart';
 import '../features/app_lock/app_lock_settings_screen.dart';
-import '../models/subject.dart';
+import '../models/study_task.dart';
+import '../providers/schedule_provider.dart';
 import '../providers/study_provider.dart';
+import 'assignment_management_screen.dart';
 import 'cloud_sync_screen.dart';
+import 'schedule_screen.dart';
+import 'subject_list_screen.dart';
+import 'word_import_screen.dart';
 import '../widgets/daily_stats_card.dart';
-import '../widgets/pomodoro_timer_widget.dart';
-import '../widgets/subject_card.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  void _showAddSubjectDialog(BuildContext context) {
-    final nameController = TextEditingController();
-    final targetController = TextEditingController(text: '5');
-    int selectedColor = 0xFF2196F3;
 
-    final colors = [
-      0xFF2196F3, // Blue
-      0xFF4CAF50, // Green
-      0xFFE91E63, // Pink
-      0xFFFF9800, // Orange
-      0xFF9C27B0, // Purple
-      0xFF00BCD4, // Cyan
-      0xFFFF5722, // Deep Orange
-    ];
 
-    showDialog(
+  void _showAddAssignmentMenu(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Thêm Bài Tập / Đề Thi',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.upload_file, color: AppColors.primary),
+                ),
+                title: const Text('Tạo từ File Word (.docx) hoặc Dán Text'),
+                subtitle: const Text('Tự động bóc tách câu hỏi, đáp án, lời giải bằng Regex'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const WordImportScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.edit_note, color: AppColors.success),
+                ),
+                title: const Text('Thêm bài tập thủ công'),
+                subtitle: const Text('Tạo bài tập kèm hạn nộp và ghi chú'),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _showAddManualAssignmentDialog(context);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAddManualAssignmentDialog(BuildContext context) {
+    final study = context.read<StudyProvider>();
+    if (study.subjects.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Vui lòng tạo môn học trước khi thêm bài tập!')),
+      );
+      return;
+    }
+
+    final titleCtrl = TextEditingController();
+    final descCtrl = TextEditingController();
+    String selectedSubId = study.subjects.first.id;
+    final dueDate = DateTime.now().add(const Duration(days: 3));
+
+    showDialog<void>(
       context: context,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
+        builder: (ctx, setDialogState) {
           return AlertDialog(
-            title: const Text('Thêm môn học mới'),
+            title: const Text('Thêm bài tập mới'),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
-                    controller: nameController,
+                    controller: titleCtrl,
                     decoration: const InputDecoration(
-                      labelText: 'Tên môn học',
-                      hintText: 'Ví dụ: Hóa học, Triết học...',
+                      labelText: 'Tiêu đề bài tập *',
                       border: OutlineInputBorder(),
                     ),
                     autofocus: true,
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: targetController,
-                    keyboardType: TextInputType.number,
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedSubId,
                     decoration: const InputDecoration(
-                      labelText: 'Mục tiêu (giờ / tuần)',
+                      labelText: 'Môn học',
                       border: OutlineInputBorder(),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Chọn màu đại diện:',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 10,
-                    children: colors.map((c) {
-                      final isSelected = selectedColor == c;
-                      return GestureDetector(
-                        onTap: () => setDialogState(() => selectedColor = c),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: Color(c),
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: Colors.black87, width: 3)
-                                : null,
-                          ),
-                        ),
+                    items: study.subjects.map((sub) {
+                      return DropdownMenuItem(
+                        value: sub.id,
+                        child: Text(sub.name),
                       );
                     }).toList(),
+                    onChanged: (val) {
+                      if (val != null) setDialogState(() => selectedSubId = val);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: descCtrl,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      labelText: 'Ghi chú / Mô tả',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ],
               ),
@@ -92,20 +146,17 @@ class HomeScreen extends StatelessWidget {
                 child: const Text('Hủy'),
               ),
               FilledButton(
-                onPressed: () {
-                  final name = nameController.text.trim();
-                  if (name.isEmpty) return;
-                  final target = double.tryParse(targetController.text) ?? 5.0;
-
-                  final newSubject = Subject(
-                    id: 'sub_${DateTime.now().millisecondsSinceEpoch}',
-                    name: name,
-                    colorValue: selectedColor,
-                    weeklyTargetHours: target,
+                onPressed: () async {
+                  if (titleCtrl.text.trim().isEmpty) return;
+                  final newTask = StudyTask(
+                    id: 'task_${DateTime.now().millisecondsSinceEpoch}',
+                    subjectId: selectedSubId,
+                    title: titleCtrl.text.trim(),
+                    description: descCtrl.text.trim(),
+                    dueDate: dueDate,
                   );
-
-                  context.read<StudyProvider>().addSubject(newSubject);
-                  Navigator.pop(ctx);
+                  await study.addTask(newTask);
+                  if (ctx.mounted) Navigator.pop(ctx);
                 },
                 child: const Text('Lưu'),
               ),
@@ -144,6 +195,28 @@ class HomeScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.calendar_month),
+            tooltip: 'Thời khóa biểu',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ScheduleScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu_book),
+            tooltip: 'Quản lý môn học',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const SubjectListScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.lock_outline),
             tooltip: 'Khóa ứng dụng bằng PIN',
             onPressed: () {
@@ -165,11 +238,6 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'Thêm môn học',
-            onPressed: () => _showAddSubjectDialog(context),
-          ),
         ],
       ),
       body: study.isLoading
@@ -182,54 +250,74 @@ class HomeScreen extends StatelessWidget {
                   // Thống kê nhanh trong ngày
                   const DailyStatsCard(),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                  // Bộ đếm Pomodoro
-                  const PomodoroTimerWidget(),
+                  // Thẻ Thời khóa biểu hôm nay
+                  _buildTodayScheduleCard(context),
 
                   const SizedBox(height: 24),
 
-                  // Tiêu đề danh sách môn học
+                  // Tiêu đề danh sách Bài Tập (Thay thế Môn học & Mục tiêu)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Môn học & Mục tiêu',
+                        'Bài Tập',
                         style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: () => _showAddSubjectDialog(context),
-                        icon: const Icon(Icons.add, size: 18),
-                        label: const Text('Thêm môn'),
+                      Row(
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const AssignmentManagementScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text('Quản lý'),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle, size: 22),
+                            tooltip: 'Thêm bài tập / Nhập đề Word',
+                            onPressed: () => _showAddAssignmentMenu(context),
+                          ),
+                        ],
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 8),
 
-                  // Danh sách môn học
-                  if (study.subjects.isEmpty)
+                  // Danh sách Bài Tập
+                  if (study.tasks.isEmpty)
                     Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 24),
-                        child: Text(
-                          'Chưa có môn học nào. Nhấn "Thêm môn" để bắt đầu!',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.assignment_outlined,
+                              size: 44,
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Chưa có bài tập nào. Nhấn "+" để tạo bài tập hoặc nhập đề từ Word!',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     )
                   else
-                    ...study.subjects.map(
-                      (subject) => SubjectCard(
-                        subject: subject,
-                        onTap: () {
-                          // Xem chi tiết môn học hoặc đổi mục tiêu
-                        },
-                      ),
+                    ...study.tasks.map(
+                      (task) => _buildAssignmentItem(context, task, study),
                     ),
                   const SizedBox(height: 20),
                 ],
@@ -237,4 +325,246 @@ class HomeScreen extends StatelessWidget {
             ),
     );
   }
+
+  Widget _buildTodayScheduleCard(BuildContext context) {
+    final scheduleProvider = context.watch<ScheduleProvider>();
+    final studyProvider = context.watch<StudyProvider>();
+    final todaySchedules = scheduleProvider.todaySchedules;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.25),
+        ),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.calendar_month,
+                      size: 18,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Lịch học hôm nay',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ScheduleScreen(),
+                    ),
+                  );
+                },
+                child: const Text('Xem thời khóa biểu'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (todaySchedules.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    size: 18,
+                    color: AppColors.success,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Hôm nay không có buổi học nào trên lớp.',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isDark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Column(
+              children: todaySchedules.take(3).map((schedule) {
+                final subject = studyProvider.getSubjectById(schedule.subjectId);
+                final color = subject != null
+                    ? Color(subject.colorValue)
+                    : AppColors.primary;
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          schedule.timeSpan,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          subject?.name ?? 'Môn học',
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          schedule.room,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAssignmentItem(
+    BuildContext context,
+    StudyTask task,
+    StudyProvider study,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subject = study.getSubjectById(task.subjectId ?? '');
+    final subjectColor = subject != null ? Color(subject.colorValue) : AppColors.primary;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : AppColors.lightCard,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: task.isCompleted
+              ? (isDark ? Colors.white10 : Colors.black12)
+              : subjectColor.withValues(alpha: 0.25),
+          width: 1,
+        ),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        leading: Checkbox(
+          value: task.isCompleted,
+          activeColor: AppColors.success,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+          onChanged: (_) {
+            study.toggleTaskCompletion(task.id);
+          },
+        ),
+        title: Text(
+          task.title,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+            decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+            color: task.isCompleted
+                ? (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary)
+                : null,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: subjectColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                subject?.name ?? 'Môn học',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: subjectColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.calendar_today_outlined,
+                size: 12,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                task.formattedDueDate,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.arrow_forward_ios, size: 14),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AssignmentManagementScreen(),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 }
+

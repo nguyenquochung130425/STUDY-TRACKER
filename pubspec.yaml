@@ -43,6 +43,10 @@ dependencies:
   cloud_firestore: ^7.0.0
   connectivity_plus: ^7.3.2
   flutter_secure_storage: ^9.2.4
+  sqflite: ^2.4.5
+  path: ^1.9.1
+  sqflite_common_ffi: ^2.4.5
+  archive: ^4.5.2
 
 dev_dependencies:
   flutter_test:

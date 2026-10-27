@@ -92,6 +92,80 @@
 
 ---
 
+## 💾 Vai Trò 2: Cơ Sở Dữ Liệu Cục Bộ & Quản Lý Học Tập Cốt Lõi (SQLite Database, Môn Học & Lịch Học)
+
+### 1. Kiến Tạo Hệ Thống Database (SQLite) & Data Access Layer
+- [x] Xây dựng `DatabaseHelper` singleton (`lib/core/database/database_helper.dart`), cấu hình đường dẫn cơ sở dữ liệu `study_tracker.db` với `sqflite` và `sqflite_common_ffi`.
+- [x] Kích hoạt ràng buộc khóa ngoại nghiêm ngặt: `PRAGMA foreign_keys = ON;`.
+- [x] Định nghĩa toàn bộ cấu trúc 4 bảng cốt lõi:
+  - `subjects`: id, code, name, credits, lecturer, semester, color_value, icon_code_point, weekly_target_hours, created_at, updated_at.
+  - `assignments`: id, subject_id, title, description, due_date, is_completed, priority, created_at, updated_at (Khóa ngoại `ON DELETE CASCADE`).
+  - `schedules`: id, subject_id, day_of_week, start_time, end_time, room, building, note, created_at, updated_at (Khóa ngoại `ON DELETE CASCADE`).
+  - `grades`: id, subject_id, title, score, max_score, weight, created_at, updated_at (Khóa ngoại `ON DELETE CASCADE`).
+- [x] Xây dựng Data Access Layer (DAL) tổng quát: `insert`, `query`, `update`, `delete`, `transaction`, cùng các DAO phương thức nghiệp vụ cho từng thực thể.
+- [x] Cơ chế nạp sẵn dữ liệu mẫu ban đầu (Seed initial data) giúp trải nghiệm ngay lập tức.
+
+### 2. Chức Năng 3.2: Quản Lý Môn Học (CRUD Chính & Ràng Buộc)
+- [x] Màn hình danh sách môn học `SubjectListScreen` (`lib/screens/subject_list_screen.dart`):
+  - Hiển thị danh sách thẻ môn học trực quan với huy hiệu mã môn, tên môn, số tín chỉ, giảng viên, mục tiêu học tuần.
+  - Bộ lọc thông minh theo học kỳ (Semester Filter Chips: "Tất cả", "Học kỳ 1", "Học kỳ 2",...).
+  - Thanh tìm kiếm realtime theo tên môn, mã môn, tên giảng viên.
+  - Thẻ tóm tắt đầu trang: Tổng số môn học, tổng số tín chỉ tích lũy.
+- [x] Màn hình thêm và sửa chi tiết môn học `SubjectFormScreen` (`lib/screens/subject_form_screen.dart`):
+  - Nhập tên môn học, mã môn học (code), số tín chỉ (credits), giảng viên phụ trách (lecturer), học kỳ (semester).
+  - Bảng chọn màu đại diện (Palette) và bộ chọn biểu tượng môn học (Icon Picker).
+  - Thiết lập số giờ tự học mục tiêu hàng tuần (weeklyTargetHours) và form validation đầy đủ.
+- [x] **Logic ràng buộc & Cascade Delete:**
+  - Khi người dùng yêu cầu xóa môn học, hệ thống tự động kiểm tra số lượng bản ghi liên quan qua `getSubjectRelatedCounts(subjectId)`.
+  - Nếu có dữ liệu liên kết (buổi học, bài tập, điểm số), hiển thị hộp thoại cảnh báo chi tiết về nguy cơ mất dữ liệu và yêu cầu xác nhận Cascade Delete.
+  - Xóa sạch dữ liệu con phụ thuộc đồng thời trong SQLite và cập nhật in-memory state.
+
+### 3. Chức Năng 3.4: Quản Lý Lịch Học & Thời Khóa Biểu
+- [x] Model `Schedule` (`lib/models/schedule.dart`) với các phương thức xác định trạng thái buổi học (`ongoing`, `upcoming`, `completed`), tính toán thời lượng, quy đổi thứ trong tuần.
+- [x] `ScheduleProvider` (`lib/providers/schedule_provider.dart`) quản lý trạng thái thời khóa biểu, nạp và lưu trữ trực tiếp với SQLite.
+- [x] Màn hình thời khóa biểu `ScheduleScreen` (`lib/screens/schedule_screen.dart`):
+  - **Chế độ xem theo ngày (Day View):** Thanh chọn thứ trong tuần (T2 - CN), highlight ngày hiện tại, timeline buổi học theo thứ tự giờ, gắn badge trạng thái "Đang diễn ra", "Sắp tới", "Đã xong".
+  - **Chế độ xem theo tuần (Week View):** Hiển thị tổng quan toàn bộ các buổi học trong tuần theo từng ngày.
+  - **Chức năng Thêm / Sửa / Xóa buổi học:** Form chọn môn học từ danh sách, chọn thứ, TimePicker chọn giờ học (validate giờ kết thúc > giờ bắt đầu), nhập phòng học, tòa nhà, ghi chú.
+  - **Tìm kiếm môn học trực tiếp trong lịch học:** Realtime SearchBar tìm kiếm nhanh chóng theo tên môn, mã môn, phòng học hoặc giảng viên.
+- [x] Tích hợp lối tắt thời khóa biểu và quản lý môn học ngay trên `HomeScreen`.
+
+### 4. Chức Năng: Quản Lý Bài Tập & Hệ Thống Đề Thi Trắc Nghiệm Từ Word (Flow F1 & Flow F2)
+- [x] **Mở rộng SQLite Schema:**
+  - Bảng `questions` (id, assignment_id, question_number, content, passage, explanation, created_at, updated_at) ràng buộc `ON DELETE CASCADE`.
+  - Bảng `choices` (id, question_id, label, content, is_correct) ràng buộc `ON DELETE CASCADE`.
+  - Thêm phương thức Transaction nguyên tử: `saveExamWithTransaction`, `getQuestionsByAssignment`, `updateQuestionAndChoices`, `setCorrectChoice`, `deleteQuestion`, `insertQuestionWithChoices`.
+- [x] **Flow F1: Tạo đề từ File Word (.docx) hoặc Dán Text thô (`WordImportScreen` & `WordParser`):**
+  - Engine bóc tách Regex tự động (`lib/services/word_parser.dart`): Trích xuất tiêu đề đề thi, mã đề, thời gian làm bài, danh sách câu hỏi, các phương án lựa chọn A/B/C/D, lời giải/giải thích.
+  - Hỗ trợ 3 cách nhận diện đáp án đúng:
+    - Ký tự `*` cạnh phương án lựa chọn (ví dụ: `*A. Nội dung` hoặc `A*. Nội dung`).
+    - Dòng đáp án riêng biệt (ví dụ: `Đáp án: B` hoặc `Answer: C`).
+    - Bảng đáp án ở cuối đề thi (ví dụ: `BẢNG ĐÁP ÁN: 1.A 2.B 3.C`).
+  - Giao diện Xem trước & Nhập đề (`lib/screens/word_import_screen.dart`): Upload file `.docx` (dùng `archive` để trích xuất XML và chuyển đổi sang văn bản sạch) hoặc dán text trực tiếp, chỉnh sửa nhanh thông tin đề, chọn môn học và hạn nộp, lưu toàn bộ vào SQLite bằng Transaction an toàn.
+- [x] **Flow F2: Chỉnh Sửa Nội Dung Đề Thi (`AssignmentEditScreen`):**
+  - Dropdown chọn đề thi cần chỉnh sửa trực tiếp từ CSDL.
+  - Tải và render động danh sách câu hỏi cùng các phương án lựa chọn.
+  - Cho phép sửa trực tiếp văn bản câu hỏi, đoạn văn dẫn (passage), nội dung từng lựa chọn, lời giải.
+  - **Đổi đáp án đúng tức thì:** Sử dụng Radio button kèm hiệu ứng highlight nền xanh lá và huy hiệu "Đáp án đúng" (`AppColors.success`).
+  - Nút thêm mới câu hỏi trắc nghiệm và nút xóa câu hỏi.
+- [x] **Màn hình Quản Lý Bài Tập Toàn Diện (`AssignmentManagementScreen`):**
+  - Danh sách bài tập với thanh tìm kiếm realtime và bộ lọc theo môn học (ChoiceChips).
+  - Huy hiệu hiển thị số câu hỏi trắc nghiệm (`x câu`) nếu bài tập là đề thi trắc nghiệm.
+  - Checkbox đánh dấu hoàn thành bài tập, PopupMenu thao tác nhanh (Chỉnh sửa câu hỏi, Đổi trạng thái, Xóa bài tập).
+  - Nút thêm mới dạng Floating Action Button (FAB) mở Action Sheet cho phép chọn "Tạo từ file Word" hoặc "Thêm thủ công".
+- [x] **Cải tiến Màn Hình Chính (`HomeScreen`):**
+  - Thay thế mục "Môn học & Mục tiêu" thành mục **"Bài Tập"**.
+  - Hiển thị danh sách nhiệm vụ/bài tập với checkbox hoàn thành, tên môn học kèm màu nhận diện, hạn nộp.
+  - Nút "Quản lý" chuyển sang `AssignmentManagementScreen`, nút "+" mở menu tạo bài tập nhanh hoặc nhập đề Word.
+
+### 5. Kiểm Thử Chất Lượng (Quality Assurance)
+- [x] Bộ Unit Test chuyên biệt cho SQLite và Lịch học `test/database_and_schedule_test.dart` (9/9 passed).
+- [x] Bộ Unit Test cho Regex Engine bóc tách đề thi `test/word_parser_test.dart` (6/6 passed).
+- [x] Toàn bộ test suite dự án đạt **38/38 tests passed**.
+- [x] Phân tích tĩnh mã nguồn `flutter analyze`: **No issues found!** (0 errors, 0 warnings).
+
+---
+
 ## 📁 Sơ Đồ Cấu Trúc Dự Án
 
 ```text
@@ -105,6 +179,8 @@ STUDY-TRACKER/
 │   │   │   ├── app_colors.dart
 │   │   │   ├── app_constants.dart
 │   │   │   └── app_typography.dart
+│   │   ├── database/
+│   │   │   └── database_helper.dart
 │   │   ├── services/
 │   │   │   ├── auth_service.dart
 │   │   │   └── security_service.dart
@@ -117,19 +193,23 @@ STUDY-TRACKER/
 │   │       ├── custom_dialog.dart
 │   │       └── custom_text_field.dart
 │   ├── models/
+│   │   ├── exam_question.dart
 │   │   ├── grade_entry.dart
+│   │   ├── schedule.dart
 │   │   ├── study_session.dart
 │   │   ├── study_task.dart
 │   │   ├── subject.dart
 │   │   └── user_model.dart
-│   ├── providers/feature/auth-security
+│   ├── providers/
 │   │   ├── auth_provider.dart
 │   │   ├── cloud_sync_provider.dart
- main
 │   │   ├── pomodoro_provider.dart
+│   │   ├── schedule_provider.dart
 │   │   ├── security_provider.dart
 │   │   └── study_provider.dart
 │   ├── screens/
+│   │   ├── assignment_edit_screen.dart
+│   │   ├── assignment_management_screen.dart
 │   │   ├── cloud_sync_screen.dart
 │   │   ├── home_screen.dart
 │   │   ├── login_screen.dart
@@ -137,38 +217,30 @@ STUDY-TRACKER/
 │   │   ├── pin_lock_screen.dart
 │   │   ├── profile_screen.dart
 │   │   ├── register_screen.dart
+│   │   ├── schedule_screen.dart
 │   │   ├── statistics_screen.dart
-│   │   └── tasks_screen.dart
+│   │   ├── subject_form_screen.dart
+│   │   ├── subject_list_screen.dart
+│   │   ├── tasks_screen.dart
+│   │   └── word_import_screen.dart
 │   ├── services/
-│   │   └── firebase_configuration.dart
+│   │   ├── firebase_configuration.dart
+│   │   └── word_parser.dart
 │   ├── widgets/
 │   │   ├── daily_stats_card.dart
 │   │   ├── pomodoro_timer_widget.dart
 │   │   └── subject_card.dart
 │   └── main.dart
 ├── test/
+│   ├── app_lock_test.dart
+│   ├── architecture_services_test.dart
 │   ├── auth_and_security_test.dart
-│   └── widget_test.dart
+│   ├── cloud_sync_test.dart
+│   ├── database_and_schedule_test.dart
+│   ├── pomodoro_provider_test.dart
+│   ├── study_provider_test.dart
+│   ├── widget_test.dart
+│   └── word_parser_test.dart
 ├── COMPLETED_TASKS.md
 └── README.md
 ```
- feature/auth-security
-
-
----
-
-## 📌 Lịch Sử Commit
-
-1. `04b2549` - `Initial commit`
-2. `85bb8e1` - `docs: update README with project overview and architecture`
-3. `b6ec0a7` - `feat: initialize Flutter project template for study_tracker`
-4. `25b0467` - `feat: add models, providers, widgets, Pomodoro timer, and screens`
-
----
-
-## 🚀 Kế Hoạch Tiếp Theo (Roadmap)
-- [ ] Tích hợp thông báo đẩy nội bộ (`flutter_local_notifications`) khi hết giờ Pomodoro.
-- [ ] Tùy chỉnh độ dài thời gian tập trung & thời gian nghỉ theo ý thích người dùng.
-- [x] Triển khai Cloud Sync Engine qua Firebase (cần cấu hình Firebase project để sử dụng).
-- [ ] Xuất báo cáo học tập định dạng PDF / Excel.
- main
