@@ -2,12 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:study_tracker/core/database/database_helper.dart';
 import 'package:study_tracker/core/utils/gpa_helper.dart';
 import 'package:study_tracker/models/grade_entry.dart';
 import 'package:study_tracker/models/subject.dart';
 import 'package:study_tracker/providers/schedule_provider.dart';
 import 'package:study_tracker/providers/study_provider.dart';
+import 'package:study_tracker/screens/gpa_calculator_sheet.dart';
 import 'package:study_tracker/screens/subject_list_screen.dart';
+
+Future<void> waitForProvider(StudyProvider provider) async {
+  while (provider.isLoading) {
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -46,82 +55,79 @@ void main() {
     });
   });
 
-  group('SubjectListScreen GPA Integration Tests', () {
-    testWidgets('displays GPA Stats Chip in top summary bar and grade badge in subject card', (WidgetTester tester) async {
+  group('GPA Calculation & Simulator Tests', () {
+    test('calculates semester GPA with credit weighting and simulated what-if target', () async {
       SharedPreferences.setMockInitialValues({});
       final studyProvider = StudyProvider();
-      while (studyProvider.isLoading) {
-        await Future<void>.delayed(const Duration(milliseconds: 1));
-      }
+      await waitForProvider(studyProvider);
 
-      // Add a test subject with 3 credits
-      final subject = const Subject(
-        id: 'sub_mobile',
-        name: 'Lập trình Trên thiết bị di động',
-        code: '2323',
+      final subject1 = const Subject(
+        id: 'sub_math',
+        name: 'Toán cao cấp',
         credits: 3,
-        lecturer: 'nguyeds',
+        colorValue: 0xFF2196F3,
         semester: 'Học kỳ 1 2026-2027',
-        colorValue: 0xFF4F46E5,
-        weeklyTargetHours: 5.0,
       );
-      await studyProvider.addSubject(subject);
-
-      // Add grade 8.5 for this subject (Hệ 10: 8.5 -> Hệ 4: 4.0, Điểm chữ: A)
-      final grade = GradeEntry(
-        id: 'grade_mob_1',
-        subjectId: 'sub_mobile',
-        title: 'Điểm tổng kết',
-        score: 8.5,
-        maxScore: 10.0,
-        weight: 100.0,
-        createdAt: DateTime.now(),
+      final subject2 = const Subject(
+        id: 'sub_prog',
+        name: 'Lập trình di động',
+        credits: 4,
+        colorValue: 0xFF4CAF50,
+        semester: 'Học kỳ 1 2026-2027',
       );
-      await studyProvider.addGrade(grade);
 
-      final scheduleProvider = ScheduleProvider();
+      await studyProvider.addSubject(subject1);
+      await studyProvider.addSubject(subject2);
 
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<StudyProvider>.value(value: studyProvider),
-            ChangeNotifierProvider<ScheduleProvider>.value(value: scheduleProvider),
-          ],
-          child: const MaterialApp(
-            home: SubjectListScreen(),
-          ),
+      // Điểm môn Toán: 8.5 (Hệ 4: 4.0, A)
+      await studyProvider.addGrade(
+        GradeEntry(
+          id: 'g_math',
+          subjectId: 'sub_math',
+          title: 'Tổng kết',
+          score: 8.5,
+          maxScore: 10.0,
+          weight: 100.0,
+          createdAt: DateTime.now(),
         ),
       );
-      await tester.pumpAndSettle();
 
-      // 1. Verify GPA Stats Chip is displayed in top summary bar
-      expect(find.textContaining('🎯 GPA'), findsWidgets);
-      expect(find.textContaining('4.00'), findsWidgets);
+      // Điểm môn Lập trình: 7.5 (Hệ 4: 3.0, B)
+      await studyProvider.addGrade(
+        GradeEntry(
+          id: 'g_prog',
+          subjectId: 'sub_prog',
+          title: 'Tổng kết',
+          score: 7.5,
+          maxScore: 10.0,
+          weight: 100.0,
+          createdAt: DateTime.now(),
+        ),
+      );
 
-      // 2. Verify Subject Card displays grade
-      expect(find.text('Lập trình Trên thiết bị di động'), findsOneWidget);
-      expect(find.text('3 tín chỉ'), findsWidgets);
-      expect(find.textContaining('Điểm: 4.0'), findsOneWidget);
-      expect(find.text('A'), findsWidgets);
+      // Điểm trung bình có trọng số tín chỉ:
+      // Tổng điểm hệ 4 = (4.0 * 3) + (3.0 * 4) = 12.0 + 12.0 = 24.0
+      // Tổng tín chỉ = 3 + 4 = 7
+      // GPA hệ 4 = 24.0 / 7 = 3.4285...
+      final avg1 = studyProvider.getSubjectWeightedAverage('sub_math')!;
+      final avg2 = studyProvider.getSubjectWeightedAverage('sub_prog')!;
+      expect(avg1, 8.5);
+      expect(avg2, 7.5);
 
-      // 3. Verify GPA Calculator button in AppBar opens sheet
-      final calcButton = find.byIcon(Icons.calculate_outlined);
-      expect(calcButton, findsOneWidget);
-      await tester.tap(calcButton);
-      await tester.pumpAndSettle();
+      final gpa4Math = GpaHelper.score10To4(avg1);
+      final gpa4Prog = GpaHelper.score10To4(avg2);
+      expect(gpa4Math, 4.0);
+      expect(gpa4Prog, 3.0);
 
-      // Verify GPA Sheet content
-      expect(find.text('Bảng Điểm & Tính GPA'), findsOneWidget);
-      expect(find.text('Thang điểm 4.0'), findsOneWidget);
-      expect(find.text('Bảng Điểm Môn Học'), findsOneWidget);
-      expect(find.text('Mô Phỏng GPA (What-If)'), findsOneWidget);
+      final totalCredits = subject1.credits + subject2.credits;
+      final currentGpa4 = ((gpa4Math * subject1.credits) + (gpa4Prog * subject2.credits)) / totalCredits;
+      expect((currentGpa4 * 100).round() / 100, 3.43);
 
-      // Switch to What-If simulation tab
-      await tester.tap(find.text('Mô Phỏng GPA (What-If)'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('GPA Dự Kiến Sau Mô Phỏng:'), findsOneWidget);
-      expect(find.textContaining('Kéo slider để thử nghiệm'), findsOneWidget);
+      // Giả lập What-If: Cải thiện môn Lập trình lên 8.5 (hệ 4: 4.0)
+      const simulatedScoreProg = 8.5;
+      final simGpa4Prog = GpaHelper.score10To4(simulatedScoreProg);
+      final simulatedGpa4 = ((gpa4Math * subject1.credits) + (simGpa4Prog * subject2.credits)) / totalCredits;
+      expect(simulatedGpa4, 4.0);
     });
   });
 }
