@@ -6,6 +6,7 @@ import '../core/database/database_helper.dart';
 import '../models/study_task.dart';
 import '../providers/study_provider.dart';
 import 'assignment_edit_screen.dart';
+import 'quiz_taking_screen.dart';
 import 'word_import_screen.dart';
 
 /// Màn hình Quản lý Toàn diện Bài tập & Đề thi trắc nghiệm
@@ -82,6 +83,16 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
       }
       await _loadData();
     }
+  }
+
+  void _startQuiz(StudyTask assignment) {
+    Navigator.of(context)
+        .push(
+          MaterialPageRoute<void>(
+            builder: (_) => QuizTakingScreen(assignment: assignment),
+          ),
+        )
+        .then((_) => _loadData());
   }
 
   Future<void> _showAddManualAssignmentDialog() async {
@@ -328,6 +339,20 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
                                   horizontal: 16,
                                   vertical: 6,
                                 ),
+                                onTap: () {
+                                  if (qCount > 0) {
+                                    _startQuiz(assignment);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Bài tập này chưa có câu hỏi trắc nghiệm! Hãy bấm "..." -> Sửa nội dung để thêm câu hỏi.',
+                                        ),
+                                        backgroundColor: AppColors.info,
+                                      ),
+                                    );
+                                  }
+                                },
                                 leading: CircleAvatar(
                                   backgroundColor: sub != null
                                       ? Color(sub.colorValue).withValues(alpha: 0.2)
@@ -409,76 +434,127 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
                                     ],
                                   ],
                                 ),
-                                trailing: PopupMenuButton<String>(
-                                  onSelected: (val) {
-                                    if (val == 'edit_questions') {
-                                      Navigator.of(context)
-                                          .push(
-                                            MaterialPageRoute<void>(
-                                              builder: (_) => AssignmentEditScreen(
-                                                initialAssignmentId: assignment.id,
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (qCount > 0)
+                                        Padding(
+                                          padding: const EdgeInsets.only(right: 4),
+                                          child: FilledButton.tonalIcon(
+                                            style: FilledButton.styleFrom(
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 10,
+                                                vertical: 4,
+                                              ),
+                                              visualDensity: VisualDensity.compact,
+                                              backgroundColor:
+                                                  AppColors.primary.withValues(alpha: 0.12),
+                                              foregroundColor: AppColors.primary,
+                                            ),
+                                            icon: const Icon(Icons.play_arrow, size: 18),
+                                            label: const Text(
+                                              'Làm bài',
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
-                                          )
-                                          .then((_) => _loadData());
-                                    } else if (val == 'toggle_status') {
-                                      final updated = assignment.copyWith(
-                                        isCompleted: !assignment.isCompleted,
-                                      );
-                                      _db.updateAssignment(updated);
-                                      context.read<StudyProvider>().updateTask(updated);
-                                      _loadData();
-                                    } else if (val == 'delete') {
-                                      _deleteAssignment(assignment);
-                                    }
-                                  },
-                                  itemBuilder: (ctx) => [
-                                    if (qCount > 0)
-                                      const PopupMenuItem(
-                                        value: 'edit_questions',
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.edit, size: 18, color: AppColors.primary),
-                                            SizedBox(width: 8),
-                                            Text('Sửa nội dung câu hỏi'),
-                                          ],
+                                            onPressed: () => _startQuiz(assignment),
+                                          ),
                                         ),
-                                      ),
-                                    PopupMenuItem(
-                                      value: 'toggle_status',
-                                      child: Row(
-                                        children: [
-                                          Icon(
-                                            assignment.isCompleted
-                                                ? Icons.undo
-                                                : Icons.check_circle_outline,
-                                            size: 18,
-                                            color: AppColors.success,
+                                      PopupMenuButton<String>(
+                                        onSelected: (val) {
+                                          if (val == 'start_quiz') {
+                                            _startQuiz(assignment);
+                                          } else if (val == 'edit_questions') {
+                                            Navigator.of(context)
+                                                .push(
+                                                  MaterialPageRoute<void>(
+                                                    builder: (_) => AssignmentEditScreen(
+                                                      initialAssignmentId: assignment.id,
+                                                    ),
+                                                  ),
+                                                )
+                                                .then((_) => _loadData());
+                                          } else if (val == 'toggle_status') {
+                                            final updated = assignment.copyWith(
+                                              isCompleted: !assignment.isCompleted,
+                                            );
+                                            _db.updateAssignment(updated);
+                                            context.read<StudyProvider>().updateTask(updated);
+                                            _loadData();
+                                          } else if (val == 'delete') {
+                                            _deleteAssignment(assignment);
+                                          }
+                                        },
+                                        itemBuilder: (ctx) => [
+                                          if (qCount > 0)
+                                            const PopupMenuItem(
+                                              value: 'start_quiz',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.play_circle_fill,
+                                                      size: 18, color: AppColors.primary),
+                                                  SizedBox(width: 8),
+                                                  Text(
+                                                    'Bắt đầu làm bài',
+                                                    style: TextStyle(
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppColors.primary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          if (qCount > 0)
+                                            const PopupMenuItem(
+                                              value: 'edit_questions',
+                                              child: Row(
+                                                children: [
+                                                  Icon(Icons.edit,
+                                                      size: 18, color: AppColors.primary),
+                                                  SizedBox(width: 8),
+                                                  Text('Sửa nội dung câu hỏi'),
+                                                ],
+                                              ),
+                                            ),
+                                          PopupMenuItem(
+                                            value: 'toggle_status',
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  assignment.isCompleted
+                                                      ? Icons.undo
+                                                      : Icons.check_circle_outline,
+                                                  size: 18,
+                                                  color: AppColors.success,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  assignment.isCompleted
+                                                      ? 'Đánh dấu chưa xong'
+                                                      : 'Đánh dấu đã hoàn thành',
+                                                ),
+                                              ],
+                                            ),
                                           ),
-                                          SizedBox(width: 8),
-                                          Text(
-                                            assignment.isCompleted
-                                                ? 'Đánh dấu chưa xong'
-                                                : 'Đánh dấu đã hoàn thành',
+                                          const PopupMenuItem(
+                                            value: 'delete',
+                                            child: Row(
+                                              children: [
+                                                Icon(Icons.delete_outline,
+                                                    size: 18, color: AppColors.error),
+                                                SizedBox(width: 8),
+                                                Text('Xóa bài tập'),
+                                              ],
+                                            ),
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    const PopupMenuItem(
-                                      value: 'delete',
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.delete_outline,
-                                              size: 18, color: AppColors.error),
-                                          SizedBox(width: 8),
-                                          Text('Xóa bài tập'),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
                           },
                         ),
                 ),

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../core/constants/app_colors.dart';
+import '../core/database/database_helper.dart';
+import '../core/utils/gpa_helper.dart';
 import '../core/widgets/custom_button.dart';
+import '../models/grade_entry.dart';
 import '../models/subject.dart';
 import '../providers/schedule_provider.dart';
 import '../providers/study_provider.dart';
+import 'gpa_calculator_sheet.dart';
 import 'subject_form_screen.dart';
 
 class SubjectListScreen extends StatefulWidget {
@@ -263,10 +267,36 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
       (sum, s) => sum + s.weeklyTargetHours,
     );
 
+    // Tính GPA học kỳ cho các môn đang lọc theo công thức chuẩn:
+    // GPA = sum(Điểm môn_i * Số tín chỉ_i) / sum(Số tín chỉ_i)
+    double totalWeightedScore4 = 0.0;
+    int gradedCredits = 0;
+    for (final s in filteredSubjects) {
+      final avg10 = studyProvider.getSubjectWeightedAverage(s.id);
+      if (avg10 != null && s.credits > 0) {
+        final score4 = GpaHelper.score10To4(avg10);
+        totalWeightedScore4 += score4 * s.credits;
+        gradedCredits += s.credits;
+      }
+    }
+    final double? semesterGpa =
+        gradedCredits > 0 ? (totalWeightedScore4 / gradedCredits) : null;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Quản lý Môn học'),
         actions: [
+          IconButton(
+            tooltip: 'Bảng điểm & Tính GPA',
+            icon: const Icon(Icons.calculate_outlined),
+            onPressed: () {
+              GpaCalculatorSheet.show(
+                context,
+                subjects: filteredSubjects,
+                currentSemester: _selectedSemester,
+              );
+            },
+          ),
           IconButton(
             tooltip: 'Thêm môn học',
             icon: const Icon(Icons.add),
@@ -369,30 +399,54 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                // Thống kê nhanh
-                Row(
-                  children: [
-                    _buildStatBadge(
-                      Icons.book_outlined,
-                      '${filteredSubjects.length} môn',
-                      AppColors.primary,
-                      isDark,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildStatBadge(
-                      Icons.school_outlined,
-                      '$totalCredits tín chỉ',
-                      AppColors.secondary,
-                      isDark,
-                    ),
-                    const SizedBox(width: 8),
-                    _buildStatBadge(
-                      Icons.timer_outlined,
-                      '${totalTargetHours.toStringAsFixed(1)}h / tuần',
-                      AppColors.warning,
-                      isDark,
-                    ),
-                  ],
+                // Thống kê nhanh kèm Stats Chip GPA học kỳ
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildStatBadge(
+                        Icons.book_outlined,
+                        '${filteredSubjects.length} môn',
+                        AppColors.primary,
+                        isDark,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildStatBadge(
+                        Icons.school_outlined,
+                        '$totalCredits tín chỉ',
+                        AppColors.secondary,
+                        isDark,
+                      ),
+                      const SizedBox(width: 8),
+                      _buildStatBadge(
+                        Icons.timer_outlined,
+                        '${totalTargetHours.toStringAsFixed(1)}h / tuần',
+                        AppColors.warning,
+                        isDark,
+                      ),
+                      const SizedBox(width: 8),
+                      // Thẻ thống kê GPA học kỳ (Stats Chip)
+                      _buildStatBadge(
+                        Icons.stars,
+                        semesterGpa != null
+                            ? (_selectedSemester == 'Tất cả'
+                                ? '🎯 GPA: ${semesterGpa.toStringAsFixed(2)}'
+                                : '🎯 GPA Học kỳ: ${semesterGpa.toStringAsFixed(2)}')
+                            : (_selectedSemester == 'Tất cả'
+                                ? '🎯 GPA: --'
+                                : '🎯 GPA Học kỳ: --'),
+                        const Color(0xFF6366F1), // Indigo accent
+                        isDark,
+                        onTap: () {
+                          GpaCalculatorSheet.show(
+                            context,
+                            subjects: filteredSubjects,
+                            currentSemester: _selectedSemester,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -421,9 +475,10 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
     IconData icon,
     String label,
     Color color,
-    bool isDark,
-  ) {
-    return Container(
+    bool isDark, {
+    VoidCallback? onTap,
+  }) {
+    final badge = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.2 : 0.1),
@@ -445,12 +500,35 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
               color: color,
             ),
           ),
+          if (onTap != null) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.chevron_right, size: 13, color: color),
+          ],
         ],
       ),
     );
+
+    if (onTap != null) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: badge,
+        ),
+      );
+    }
+    return badge;
   }
 
   Widget _buildSubjectCard(BuildContext context, Subject subject, bool isDark) {
+    final study = context.watch<StudyProvider>();
+    final avg10 = study.getSubjectWeightedAverage(subject.id);
+    final hasGrade = avg10 != null;
+    final score4 = hasGrade ? GpaHelper.score10To4(avg10) : null;
+    final letter = hasGrade ? GpaHelper.scoreToLetter(avg10) : null;
+    final letterColor = letter != null ? GpaHelper.getLetterColor(letter) : Colors.grey;
+
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : AppColors.lightCard,
@@ -544,6 +622,95 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                                   ),
                                 ),
                               ),
+                              const SizedBox(width: 6),
+                              // Badge Điểm số hoặc Nút Nhập điểm
+                              if (hasGrade) ...[
+                                InkWell(
+                                  onTap: () => _showQuickGradeDialog(context, subject),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: letterColor.withValues(
+                                        alpha: isDark ? 0.25 : 0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: letterColor.withValues(alpha: 0.4),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          'Điểm: ${score4!.toStringAsFixed(1)} ',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: letterColor,
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 0.5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: letterColor,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                          child: Text(
+                                            letter!,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ] else ...[
+                                InkWell(
+                                  onTap: () => _showQuickGradeDialog(context, subject),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: isDark ? 0.2 : 0.08,
+                                      ),
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: AppColors.primary.withValues(alpha: 0.3),
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(Icons.add, size: 12, color: AppColors.primary),
+                                        SizedBox(width: 2),
+                                        Text(
+                                          'Nhập điểm',
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -561,7 +728,9 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                     PopupMenuButton<String>(
                       icon: const Icon(Icons.more_vert, size: 20),
                       onSelected: (val) {
-                        if (val == 'edit') {
+                        if (val == 'grades') {
+                          _showQuickGradeDialog(context, subject);
+                        } else if (val == 'edit') {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -573,6 +742,16 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                         }
                       },
                       itemBuilder: (ctx) => [
+                        const PopupMenuItem(
+                          value: 'grades',
+                          child: Row(
+                            children: [
+                              Icon(Icons.grade_outlined, size: 18, color: AppColors.primary),
+                              SizedBox(width: 8),
+                              Text('Nhập / Sửa điểm môn'),
+                            ],
+                          ),
+                        ),
                         const PopupMenuItem(
                           value: 'edit',
                           child: Row(
@@ -729,6 +908,160 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Hộp thoại nhập điểm nhanh cho môn học
+  Future<void> _showQuickGradeDialog(BuildContext context, Subject subject) async {
+    final study = context.read<StudyProvider>();
+    final existingGrades = study.grades.where((g) => g.subjectId == subject.id).toList();
+    final avg10 = study.getSubjectWeightedAverage(subject.id);
+
+    final titleController = TextEditingController(
+      text: existingGrades.isNotEmpty ? existingGrades.first.title : 'Điểm tổng kết',
+    );
+    final scoreController = TextEditingController(
+      text: avg10 != null ? avg10.toStringAsFixed(1) : '',
+    );
+    final maxScoreController = TextEditingController(text: '10');
+    final weightController = TextEditingController(text: '100');
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Color(subject.colorValue).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.grade, color: Color(subject.colorValue), size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Nhập điểm: ${subject.name}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Số tín chỉ: ${subject.credits} • ${subject.semester}',
+                style: const TextStyle(fontSize: 12.5, color: Colors.grey),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(
+                  labelText: 'Tên đầu điểm',
+                  hintText: 'Ví dụ: Điểm tổng kết, Giữa kỳ, Cuối kỳ...',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: scoreController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                  labelText: 'Điểm hệ 10',
+                  hintText: 'Ví dụ: 8.5',
+                  suffixText: '/ 10',
+                ),
+                autofocus: true,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton.icon(
+                    icon: const Icon(Icons.table_chart_outlined, size: 16),
+                    label: const Text('Bảng điểm chi tiết & Tính GPA'),
+                    onPressed: () {
+                      Navigator.pop(dialogCtx);
+                      GpaCalculatorSheet.show(
+                        context,
+                        subjects: [subject],
+                        currentSemester: subject.semester,
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+            onPressed: () async {
+              final title = titleController.text.trim();
+              final score = double.tryParse(scoreController.text.trim());
+              final maxScore = double.tryParse(maxScoreController.text.trim()) ?? 10.0;
+              final weight = double.tryParse(weightController.text.trim()) ?? 100.0;
+
+              if (title.isEmpty || score == null || score < 0 || score > maxScore) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Vui lòng nhập điểm hợp lệ từ 0 đến 10!'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+                return;
+              }
+
+              if (existingGrades.isNotEmpty) {
+                final first = existingGrades.first;
+                final updated = GradeEntry(
+                  id: first.id,
+                  subjectId: subject.id,
+                  title: title,
+                  score: score,
+                  maxScore: maxScore,
+                  weight: weight,
+                  createdAt: DateTime.now(),
+                );
+                await DatabaseHelper.instance.updateGrade(updated);
+                await study.updateGrade(updated);
+              } else {
+                final newGrade = GradeEntry(
+                  id: 'grade_${DateTime.now().microsecondsSinceEpoch}',
+                  subjectId: subject.id,
+                  title: title,
+                  score: score,
+                  maxScore: maxScore,
+                  weight: weight,
+                  createdAt: DateTime.now(),
+                );
+                await DatabaseHelper.instance.insertGrade(newGrade);
+                await study.addGrade(newGrade);
+              }
+
+              if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Đã cập nhật điểm cho môn "${subject.name}"!'),
+                    backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            },
+            child: const Text('Lưu điểm'),
+          ),
+        ],
       ),
     );
   }

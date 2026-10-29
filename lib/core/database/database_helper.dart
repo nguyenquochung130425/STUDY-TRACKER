@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 import '../../models/exam_question.dart';
 import '../../models/grade_entry.dart';
@@ -41,15 +42,25 @@ class DatabaseHelper {
   }
 
   Future<Database> _initDatabase() async {
-    final isDesktop = !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
-    if (isDesktop) {
+    final DatabaseFactory factory;
+    final String path;
+
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+      factory = databaseFactoryFfiWeb;
+      path = dbName;
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
+      factory = databaseFactoryFfi;
+      final dbPath = await factory.getDatabasesPath();
+      path = p.join(dbPath, dbName);
+    } else {
+      // Mobile (Android / iOS)
+      factory = databaseFactory;
+      final dbPath = await factory.getDatabasesPath();
+      path = p.join(dbPath, dbName);
     }
-
-    final factory = isDesktop ? databaseFactoryFfi : databaseFactory;
-    final dbPath = await factory.getDatabasesPath();
-    final path = p.join(dbPath, dbName);
 
     return await factory.openDatabase(
       path,
@@ -604,10 +615,40 @@ class DatabaseHelper {
   }) async {
     final db = await database;
     await db.transaction((txn) async {
+      // Đảm bảo subject_id hợp lệ và tồn tại trong bảng subjects (Foreign Key)
+      final effectiveSubjectId = (assignment.subjectId != null && assignment.subjectId!.isNotEmpty)
+          ? assignment.subjectId!
+          : 'sub_1';
+
+      final existingSubject = await txn.query(
+        tableSubjects,
+        where: 'id = ?',
+        whereArgs: [effectiveSubjectId],
+      );
+      if (existingSubject.isEmpty) {
+        final now = DateTime.now().toIso8601String();
+        await txn.insert(
+          tableSubjects,
+          {
+            'id': effectiveSubjectId,
+            'name': 'Môn học chung',
+            'color_value': 0xFF2196F3,
+            'icon_code_point': 0xe158,
+            'weekly_target_hours': 5.0,
+            'created_at': now,
+            'updated_at': now,
+          },
+          conflictAlgorithm: ConflictAlgorithm.ignore,
+        );
+      }
+
+      final assignmentData = Map<String, dynamic>.from(assignment.toDbMap());
+      assignmentData['subject_id'] = effectiveSubjectId;
+
       // 1. Lưu thông tin Bài tập / Đề thi cha
       await txn.insert(
         tableAssignments,
-        assignment.toDbMap(),
+        assignmentData,
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
 

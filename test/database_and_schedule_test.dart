@@ -5,6 +5,7 @@ import 'package:study_tracker/models/grade_entry.dart';
 import 'package:study_tracker/models/schedule.dart';
 import 'package:study_tracker/models/study_task.dart';
 import 'package:study_tracker/models/subject.dart';
+import 'package:study_tracker/services/word_parser.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +88,33 @@ void main() {
               created_at TEXT NOT NULL,
               updated_at TEXT NOT NULL,
               FOREIGN KEY (subject_id) REFERENCES subjects (id) ON DELETE CASCADE
+            )
+          ''');
+
+          // 5. Questions
+          await database.execute('''
+            CREATE TABLE questions (
+              id TEXT PRIMARY KEY,
+              assignment_id TEXT NOT NULL,
+              question_number INTEGER DEFAULT 1,
+              content TEXT NOT NULL,
+              passage TEXT,
+              explanation TEXT,
+              created_at TEXT NOT NULL,
+              updated_at TEXT NOT NULL,
+              FOREIGN KEY (assignment_id) REFERENCES assignments (id) ON DELETE CASCADE
+            )
+          ''');
+
+          // 6. Choices
+          await database.execute('''
+            CREATE TABLE choices (
+              id TEXT PRIMARY KEY,
+              question_id TEXT NOT NULL,
+              choice_label TEXT NOT NULL,
+              content TEXT NOT NULL,
+              is_correct INTEGER NOT NULL DEFAULT 0,
+              FOREIGN KEY (question_id) REFERENCES questions (id) ON DELETE CASCADE
             )
           ''');
         },
@@ -491,6 +519,97 @@ void main() {
 
       final sundaySchedules = await dbHelper.getAllSchedules(dayOfWeek: 8);
       expect(sundaySchedules.isEmpty, isTrue);
+    });
+  });
+
+  group('Lưu đề thi Word / Bài tập vào SQLite (saveExamWithTransaction)', () {
+    test('Lưu đề thi với đầy đủ môn học, câu hỏi và lựa chọn đáp án', () async {
+      await dbHelper.insertSubject(
+        const Subject(
+          id: 'sub_exam',
+          name: 'Môn thi thử',
+          colorValue: 0xFF123456,
+        ),
+      );
+
+      final assignment = StudyTask(
+        id: 'task_exam_1',
+        title: 'Đề thi trắc nghiệm Toán',
+        subjectId: 'sub_exam',
+        dueDate: DateTime(2026, 12, 1),
+      );
+
+      final questions = [
+        ParsedQuestion(
+          number: 1,
+          content: '1 + 1 bằng mấy?',
+          choices: [
+            ParsedChoice(label: 'A', content: '1', isCorrect: false),
+            ParsedChoice(label: 'B', content: '2', isCorrect: true),
+            ParsedChoice(label: 'C', content: '3', isCorrect: false),
+            ParsedChoice(label: 'D', content: '4', isCorrect: false),
+          ],
+          explanation: '1 + 1 = 2',
+        ),
+        ParsedQuestion(
+          number: 2,
+          content: 'Thủ đô của Việt Nam là gì?',
+          choices: [
+            ParsedChoice(label: 'A', content: 'Hà Nội', isCorrect: true),
+            ParsedChoice(label: 'B', content: 'TP.HCM', isCorrect: false),
+          ],
+        ),
+      ];
+
+      await dbHelper.saveExamWithTransaction(
+        assignment: assignment,
+        questions: questions,
+      );
+
+      // Kiểm tra đề thi đã được lưu vào bảng assignments
+      final allAssignments = await dbHelper.getAllAssignments();
+      expect(allAssignments.any((a) => a.id == 'task_exam_1'), isTrue);
+
+      // Kiểm tra câu hỏi và các lựa chọn đáp án
+      final savedQuestions = await dbHelper.getQuestionsByAssignment('task_exam_1');
+      expect(savedQuestions.length, 2);
+      expect(savedQuestions[0].content, '1 + 1 bằng mấy?');
+      expect(savedQuestions[0].choices.length, 4);
+      expect(savedQuestions[0].choices.firstWhere((c) => c.label == 'B').isCorrect, isTrue);
+
+      expect(savedQuestions[1].content, 'Thủ đô của Việt Nam là gì?');
+      expect(savedQuestions[1].choices.length, 2);
+      expect(savedQuestions[1].choices.firstWhere((c) => c.label == 'A').isCorrect, isTrue);
+    });
+
+    test('Lưu đề thi an toàn khi không truyền subjectId (tự động tạo subject mặc định)', () async {
+      final assignmentNoSubject = StudyTask(
+        id: 'task_no_subject',
+        title: 'Đề thi không gắn môn',
+        subjectId: null,
+      );
+
+      final questions = [
+        ParsedQuestion(
+          number: 1,
+          content: 'Câu hỏi mẫu',
+          choices: [
+            ParsedChoice(label: 'A', content: 'Đáp án A', isCorrect: true),
+          ],
+        ),
+      ];
+
+      // Không được ném lỗi FOREIGN KEY constraint failed
+      await expectLater(
+        dbHelper.saveExamWithTransaction(
+          assignment: assignmentNoSubject,
+          questions: questions,
+        ),
+        completes,
+      );
+
+      final count = await dbHelper.getQuestionCount('task_no_subject');
+      expect(count, 1);
     });
   });
 }

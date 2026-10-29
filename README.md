@@ -1,279 +1,215 @@
-# 📚 Study Tracker - Ứng Dụng Quản Lý Học Tập & Bảo Mật Cá Nhân
+# 📚 Study Tracker - Ứng Dụng Quản Lý Học Tập, Luyện Thi & Bảo Mật Cá Nhân
 
-Ứng dụng di động theo dõi thời gian học tập, quản lý môn học, phương pháp Pomodoro và bảo mật thông tin cá nhân, được xây dựng trên nền tảng **Flutter 3.47.5** & **Dart 3.13.4**.
+[![Flutter](https://img.shields.io/badge/Flutter-3.47.5-02569B?logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.13.4-0175C2?logo=dart)](https://dart.dev)
+[![Tests](https://img.shields.io/badge/Tests-45%2F45%20Passing-success)](file:///d:/STUDY%20TRACKER/test)
+[![Analyzer](https://img.shields.io/badge/Analyzer-No%20Issues-brightgreen)](file:///d:/STUDY%20TRACKER/lib)
+[![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20iOS%20%7C%20Web%20%7C%20Windows-blue)](https://flutter.dev)
+
+Ứng dụng quản lý học tập toàn diện được phát triển trên nền tảng **Flutter & Dart**, tích hợp công cụ lập kế hoạch học tập, thời khóa biểu, đồng hồ Pomodoro, thi trắc nghiệm trực tuyến (Quiz Engine), quản lý điểm số & tính toán mô phỏng GPA, cùng cơ chế bảo mật khóa ứng dụng bằng mã PIN an toàn.
 
 ---
 
 ## 🌟 Giới Thiệu Dự Án
 
-**Study Tracker** là giải pháp toàn diện hỗ trợ học sinh, sinh viên và người tự học thiết lập kỷ luật, theo dõi tiến độ học tập và tối ưu hóa thời gian mỗi ngày. Ứng dụng kết hợp phương pháp học tập khoa học (Pomodoro) với hệ thống báo cáo trực quan và cơ chế bảo mật nâng cao (Khóa mã PIN & Tự động khóa khi chạy ngầm).
+**Study Tracker** ra đời với mục tiêu trở thành trợ thủ đắc lực cho học sinh, sinh viên và người tự học. Ứng dụng kết hợp hài hòa giữa:
+1. **Quản lý học vụ:** Quản lý môn học, số tín chỉ, thời khóa biểu và tính điểm trung bình tích lũy GPA.
+2. **Luyện thi & Làm bài tập:** Tải lên đề thi Word (`.docx`), làm bài trắc nghiệm có bấm giờ, chấm điểm tự động, xem lại các câu sai kèm lời giải chi tiết và luyện tập lại.
+3. **Kỷ luật & Tập trung:** Đồng hồ học tập Pomodoro kết hợp theo dõi chuỗi ngày học liên tục (Study Streak).
+4. **Bảo mật & Đồng bộ:** Khóa bảo mật PIN 6 số với cơ chế tự khóa khi chạy ngầm (Auto-Lock) và đồng bộ dữ liệu đám mây với Firebase Firestore.
 
 ---
 
-## ✨ Các Tính Năng Đã Triển Khai
+## ✨ Các Tính Năng Nổi Bật
 
-### 1. 🔐 Xác Thực Người Dùng & Hồ Sơ Cá Nhân (Auth & Profile - Chức năng 3.1)
-- **Đăng ký tài khoản mới (`RegisterScreen`):** Kiểm tra định dạng email, mật khẩu tối thiểu 6 ký tự, xác nhận mật khẩu.
-- **Đăng nhập (`LoginScreen`):** Đăng nhập nhanh với tài khoản cá nhân hoặc nút **"Dùng thử tài khoản Demo"** tiện lợi để trải nghiệm ngay.
-- **Quản lý hồ sơ (`ProfileScreen`):** Hiển thị avatar ký tự viết tắt, thông tin tài khoản, ngày tham gia, chỉnh sửa tên hiển thị.
-- **Đăng xuất an toàn:** Hộp thoại `CustomDialog.showConfirm` cảnh báo trước khi đăng xuất.
+### 1. 🎯 Quản Lý Môn Học & Tính Toán / Mô Phỏng GPA Học Kỳ
+- **Quản lý môn học chi tiết:** Lưu trữ tên môn, mã môn, số tín chỉ, giảng viên, mục tiêu giờ học hàng tuần, học kỳ và màu sắc/icon nhận diện.
+- **Thẻ thống kê GPA (Stats Chip):** Hiển thị ngay trên thanh tổng quan học kỳ:
+  $$\text{GPA} = \frac{\sum (\text{Điểm môn}_i \times \text{Số tín chỉ}_i)}{\sum \text{Số tín chỉ}_i}$$
+  * Giúp người dùng nắm bắt điểm trung bình học kỳ ngay lập tức mà không cần chuyển màn hình.
+- **Trường điểm số trên từng thẻ môn học (Subject Card):**
+  * Hiển thị điểm hệ 4 (ví dụ: `Điểm: 3.8`), điểm hệ 10 và điểm chữ quy đổi (`A+`, `A`, `B+`, `B`, `C+`, `C`, `D+`, `D`, `F`).
+  * Nút nhập/sửa điểm nhanh trực tiếp từ card môn học hoặc menu tùy chọn.
+- **Bảng điểm chi tiết & Bộ mô phỏng GPA (What-If Simulator):**
+  * Xem danh sách chi tiết các đầu điểm thành phần (Chuyên cần, Giữa kỳ, Cuối kỳ...) có trọng số `%`.
+  * **Mô phỏng GPA dự kiến:** Kéo slider thử nghiệm điểm số từng môn để xem GPA học kỳ thay đổi theo thời gian thực ($\Delta$ GPA), hỗ trợ lưu điểm dự kiến làm điểm chính thức.
 
- feature/auth-security
-### 2. 🛡️ Cơ Chế Bảo Mật Ứng Dụng (Security - Chức năng 3.10)
-- **Khóa ứng dụng bằng mã PIN (App Lock):** Mã PIN gồm 4 số được băm một chiều kèm chuỗi Salt bí mật (`Salted Hashing`) an toàn.
-- **Bàn phím ảo chuyên dụng (`PinLockScreen`):** Giao diện Numpad cảm ứng mượt mà, hỗ trợ quy trình 2 bước khi thiết lập/đổi PIN.
-- **Tự động khóa màn hình khi app chạy ngầm (Background Auto-Lock):** Giám sát trạng thái vòng đời ứng dụng qua `WidgetsBindingObserver`. Khi người dùng ẩn app hoặc chuyển ứng dụng, hệ thống lập tức khóa lại để bảo vệ thông tin học tập.
+---
 
-### 3. 🎨 Kiến Trúc Nền Tảng & Hệ Thống Thiết Kế (Base Architecture & Design System)
-- **Kiến trúc Feature-first kết hợp Core-shared:** Tách bạch rõ ràng `core/`, `models/`, `providers/`, `screens/`, `widgets/`.
-- **Hệ thống bảng màu (`AppColors`) & Typography (`AppTypography`):** Hỗ trợ đầy đủ **Light Mode** & **Dark Mode**.
-- **Chuyển đổi giao diện linh hoạt:** Cho phép chọn giữa Sáng, Tối hoặc Tự động theo hệ điều hành qua `ThemeProvider`.
-- **Bộ UI Components dùng chung:** `CustomButton`, `CustomTextField`, `CustomDialog`, `AppLockWrapper`.
+### 2. 📝 Quản Lý Bài Tập, Đề Thi & Làm Bài Trắc Nghiệm (Quiz Engine)
+- **Word Exam Parser (`WordParser`):**
+  * Tự động bóc tách đề thi từ tệp Word (`.docx`) hoặc văn bản thô.
+  * Nhận diện thông minh: câu hỏi, đoạn văn đọc hiểu (passage), các đáp án A/B/C/D, đáp án đúng và lời giải chi tiết.
+- **Giao diện Làm bài thi trắc nghiệm (`QuizTakingScreen`):**
+  * Đồng hồ đếm giờ làm bài thực tế (Elapsed Timer).
+  * Question Palette (dải số câu hỏi) nhảy nhanh đến câu bất kỳ, hiển thị trạng thái đã trả lời.
+  * Hộp thoại nộp bài kiểm tra và cảnh báo số câu còn bỏ sót trước khi nộp.
+- **Báo cáo kết quả & Xem lại câu sai:**
+  * Thẻ điểm Hero Banner nổi bật: Điểm số thang 10, số câu đúng/tổng số câu, tỉ lệ phần trăm, xếp loại (Xuất sắc, Giỏi, Khá, Đạt yêu cầu, Cần cố gắng).
+  * **Bộ lọc xem lại câu hỏi:** Chuyển đổi nhanh giữa *Tất cả*, *Câu sai*, *Câu đúng*.
+  * **Đánh dấu trực quan:** Đánh dấu lựa chọn bạn đã làm (`❌ Bạn đã chọn`), đáp án chuẩn (`✅ Đáp án đúng`) và hiển thị hộp `💡 Lời giải chi tiết`.
+  * Tự động đánh dấu bài tập hoàn thành và hỗ trợ nút **"Lưu điểm môn"** vào sổ điểm học tập.
+- **Làm lại bài tập & Luyện tập câu sai:**
+  * *Làm lại bài tập:* Reset toàn bộ câu trả lời và thời gian để làm lại đề thi từ đầu.
+  * *Luyện tập lại các câu sai:* Tự động lọc ra riêng các câu đã làm sai để học sinh luyện lại cho đến khi thành thạo.
 
-- 📖 **Quản lý môn học & Mục tiêu**
-  - Thêm, sửa, xóa môn học với màu sắc và biểu tượng nhận diện riêng biệt.
-  - Thiết lập mục tiêu học tập hàng tuần và theo dõi thời lượng, tỷ lệ hoàn thành theo từng môn.
+---
 
-- 📊 **Thống kê & Báo cáo trực quan**
-  - Tổng hợp thời lượng và số phiên học trong tuần, biểu đồ thời gian học theo từng ngày trong tuần.
-  - Xem lịch sử phiên học gần đây và tiến độ mục tiêu của từng môn.
-  - Quản lý đầu điểm: thêm, sửa, xóa; tính điểm trung bình có trọng số trên thang 10 và xem biểu đồ điểm.
-  - Theo dõi chuỗi ngày học liên tục (Study Streak). main
+### 3. 📅 Thời Khóa Biểu & Lịch Học Thông Minh
+- Quản lý lịch học theo tuần từ Thứ 2 đến Chủ nhật.
+- Hiển thị ca học, phòng học, giảng viên phụ trách, phân loại trạng thái buổi học.
+- Ràng buộc dữ liệu toàn vẹn: Kiểm tra và cảnh báo Cascade Delete khi xóa môn học có lịch học liên quan.
+
+---
 
 ### 4. ⏱️ Đồng Hồ Pomodoro & Thống Kê Học Tập
-- **Phương pháp Pomodoro:** 25 phút tập trung, 5 phút nghỉ ngắn, 15 phút nghỉ dài.
-- **Biểu đồ thống kê:** Trực quan hóa dữ liệu học tập trong tuần với `fl_chart`.
-- **Quản lý danh sách nhiệm vụ (Tasks):** Thêm, đánh dấu hoàn thành, phân loại việc cần làm kèm hạn nộp.
-
-- ☁️ **Đồng bộ dữ liệu đám mây**
-  - Đăng ký/đăng nhập bằng email và Google khi đã cấu hình Firebase.
-  - Đồng bộ môn học, phiên học, nhiệm vụ và điểm với Firestore; dữ liệu vẫn được lưu cục bộ khi offline.
+- **Phương pháp Pomodoro khoa học:** 25 phút tập trung cao độ, 5 phút nghỉ ngắn, 15 phút nghỉ dài.
+- **Báo cáo & Biểu đồ trực quan:**
+  * Biểu đồ thời lượng học trong tuần sử dụng `fl_chart`.
+  * Thống kê tổng số phút học hôm nay, tuần này và số phiên học hoàn thành.
+  * Theo dõi chuỗi ngày học tập liên tục (Study Streak Days).
 
 ---
 
-## 📖 Tài Liệu Hướng Dẫn Kỹ Thuật
-
-- 🏛️ [Tài liệu Kiến trúc Nền tảng & Cơ chế Bảo mật](docs/ARCHITECTURE_AND_SECURITY.md)
-- 🚀 [Chiến lược Phân nhánh Git Flow & Hướng dẫn Nhóm](docs/GIT_FLOW_AND_TEAM_GUIDE.md)
-- 📋 [Báo cáo Công việc Đã hoàn thành](COMPLETED_TASKS.md)
+### 5. 🔐 Xác Thực & Bảo Mật Ứng Dụng (Auth & App Lock)
+- **Xác thực người dùng:** Đăng ký, đăng nhập tài khoản bằng email/mật khẩu, hỗ trợ nút **"Dùng thử tài khoản Demo"** một chạm.
+- **Bảo mật mã PIN (App Lock):**
+  * Thiết lập mã PIN 6 số được bảo vệ bằng mã hóa an toàn trên thiết bị (`flutter_secure_storage`).
+  * Bàn phím số Numpad cảm ứng chuyên dụng.
+  * **Tự động khóa khi chạy ngầm (Background Auto-Lock):** Giám sát trạng thái ứng dụng qua `WidgetsBindingObserver`, tự động khóa màn hình ngay khi người dùng rời app.
+  * Cơ chế chống brute-force: Tạm khóa sau nhiều lần nhập sai liên tiếp.
 
 ---
 
-## 📂 Sơ Đồ Cấu Trúc Thư Mục
+### 6. 💾 Cơ Sở Dữ Liệu Đa Nền Tảng (SQLite FFI & Web WASM)
+- **Kiến trúc CSDL SQLite quan hệ:**
+  * Lưu trữ cấu trúc bảng: `subjects`, `schedules`, `assignments`, `questions`, `choices`, `grades`.
+  * Hỗ trợ lưu trữ transaction an toàn cho bộ đề thi nhiều câu hỏi.
+- **Đa nền tảng thực sự:**
+  * **Desktop / Mobile:** Chạy qua `sqflite` và `sqflite_common_ffi`.
+  * **Web:** Tích hợp `sqflite_common_ffi_web` với file Web Worker `web/sqflite_sw.js` và WebAssembly `web/sqlite3.wasm`.
+
+---
+
+## 📂 Sơ Đồ Cấu Trúc Dự Án
 
 ```text
 STUDY-TRACKER/
-├── docs/                                # Tài liệu kỹ thuật & quản lý dự án
-│   ├── ARCHITECTURE_AND_SECURITY.md
-│   └── GIT_FLOW_AND_TEAM_GUIDE.md
 ├── lib/
 │   ├── core/                            # Nền tảng dùng chung
-│   │   ├── constants/                   # Colors, Typography, Constants
+│   │   ├── constants/                   # AppColors, hằng số hệ thống
+│   │   ├── database/                    # DatabaseHelper (SQLite FFI / WASM)
 │   │   ├── services/                    # AuthService, SecurityService
-│   │   ├── theme/                       # AppTheme, ThemeProvider
-│   │   └── widgets/                     # CustomButton, CustomTextField, CustomDialog, AppLockWrapper
+│   │   ├── theme/                       # AppTheme, ThemeProvider, AppTypography
+│   │   ├── utils/                       # GpaHelper, bộ tiện ích tính toán
+│   │   └── widgets/                     # CustomButton, CustomTextField, CustomDialog
+│   ├── features/                        # Module nghiệp vụ chuyên biệt
+│   │   ├── analytics/                   # StudyAnalyticsService
+│   │   └── cloud_sync/                  # CloudSyncService
 │   ├── models/                          # Data Models
+│   │   ├── exam_question.dart           # QuestionModel, ChoiceModel
+│   │   ├── grade_entry.dart             # GradeEntry (đầu điểm môn học)
+│   │   ├── schedule_entry.dart          # ScheduleEntry (thời khóa biểu)
+│   │   ├── study_session.dart           # StudySession (phiên học Pomodoro)
+│   │   ├── study_task.dart              # StudyTask (bài tập, đề thi)
+│   │   └── subject.dart                 # Subject (môn học & tín chỉ)
 │   ├── providers/                       # State Management (Provider)
-│   ├── screens/                         # Màn hình (Login, Register, Profile, PinLock, Home, ...)
-│   ├── widgets/                         # Các widget nghiệp vụ
-│   └── main.dart                        # MultiProvider & Entrypoint
-├── test/
-│   ├── auth_and_security_test.dart      # Unit tests cho Auth & Security
-│   └── widget_test.dart                 # Widget tests
-├── pubspec.yaml
-└── README.md
+│   │   ├── app_lock_provider.dart       # Quản lý khóa PIN & auto-lock
+│   │   ├── schedule_provider.dart       # Quản lý thời khóa biểu
+│   │   └── study_provider.dart          # Quản lý môn học, điểm số, Pomodoro
+│   ├── screens/                         # Màn hình ứng dụng
+│   │   ├── assignment_management_screen.dart # Quản lý bài tập & đề thi
+│   │   ├── gpa_calculator_sheet.dart    # Bảng điểm chi tiết & Mô phỏng GPA
+│   │   ├── quiz_taking_screen.dart      # Làm bài trắc nghiệm & Xem câu sai
+│   │   ├── subject_list_screen.dart     # Quản lý môn học & Thẻ GPA
+│   │   ├── statistics_screen.dart       # Thống kê & biểu đồ học tập
+│   │   ├── pomodoro_screen.dart         # Đồng hồ Pomodoro
+│   │   └── pin_lock_screen.dart         # Màn hình mở khóa PIN
+│   ├── services/
+│   │   └── word_parser.dart             # Bộ bóc tách đề thi Word (.docx)
+│   └── main.dart                        # Điểm khởi chạy & Cấu hình Provider
+├── test/                                # Bộ kiểm thử tự động (45 tests)
+│   ├── gpa_management_test.dart         # Kiểm thử tính điểm GPA & What-If
+│   ├── quiz_taking_test.dart            # Kiểm thử thi trắc nghiệm & Xem câu sai
+│   ├── database_and_schedule_test.dart  # Kiểm thử CSDL SQLite & Cascade
+│   ├── word_parser_test.dart            # Kiểm thử bóc tách đề thi Word
+│   ├── app_lock_test.dart               # Kiểm thử bảo mật mã PIN
+│   └── study_provider_test.dart         # Kiểm thử Provider học tập
+├── web/                                 # Tài nguyên Web & SQLite WASM
+│   ├── sqflite_sw.js                    # Web Worker cho SQLite
+│   └── sqlite3.wasm                     # SQLite WebAssembly binary
+├── pubspec.yaml                         # Cấu hình dependencies
+└── README.md                            # Tài liệu dự án
 ```
 
 ---
 
-## 🚀 Hướng Dẫn Cài Đặt & Chạy Ứng Dụng
+## 🚀 Hướng Dẫn Cài Đặt & Khởi Chạy
 
-1. **Clone dự án:**
-   ```bash
-   git clone https://github.com/nguyenquochung130425/STUDY-TRACKER.git
-   cd STUDY-TRACKER
-   ```
+### 1. Yêu cầu môi trường
+- **Flutter SDK:** >= 3.47.0 (Khuyến nghị 3.47.5+)
+- **Dart SDK:** >= 3.13.0
+- **Hệ điều hành hỗ trợ:** Windows 10/11, macOS, Linux, Android, iOS, Chrome/Edge (Web)
 
-2. **Cài đặt thư viện:**
-   ```bash
-   flutter pub get
-   ```
+### 2. Cài đặt các thư viện
+```bash
+git clone https://github.com/nguyenquochung130425/STUDY-TRACKER.git
+cd STUDY-TRACKER
+flutter pub get
+```
 
-3. **Chạy kiểm thử & phân tích mã nguồn:**
-   ```bash
-   flutter analyze   # Đạt: No issues found!
-   flutter test      # Đạt: All tests passed! (5/5 tests)
-   ```
+### 3. Cấu hình SQLite cho Web (Nếu chạy Web)
+Dự án đã tích hợp sẵn tệp WASM và Web Worker trong thư mục `web/`. Nếu cần cập nhật lại:
+```bash
+dart run sqflite_common_ffi_web:setup
+```
 
- feature/auth-security
-4. **Khởi chạy ứng dụng:**
-   ```bash
-   flutter run
-   ```
-### Cấu hình Firebase cho Cloud Sync
-
-Cloud Sync cần một Firebase project riêng. Khi chưa cấu hình, ứng dụng vẫn hoạt
-động và lưu dữ liệu cục bộ; đăng nhập và đồng bộ cloud sẽ không khả dụng.
-
-1. Tạo project tại [Firebase Console](https://console.firebase.google.com/) và
-   thêm ứng dụng cho từng nền tảng cần chạy (Android, iOS, Web hoặc macOS).
-2. Trong **Authentication → Sign-in method**, bật **Email/Password**. Có thể bật
-   thêm **Google** để dùng đăng nhập Google trên Web, Android và iOS.
-   Trong phần password policy, đặt tối thiểu 8 ký tự để khớp với kiểm tra đăng ký
-   trong ứng dụng.
-3. Tạo Firestore database. Repository có sẵn [firestore.rules](./firestore.rules)
-   để chỉ cho phép người dùng truy cập dữ liệu của chính họ và kiểm tra cấu trúc
-   bản ghi. Đăng nhập Firebase CLI rồi triển khai rules từ thư mục gốc:
-
-   ```powershell
-   firebase login
-   firebase deploy --only firestore:rules --project YOUR_FIREBASE_PROJECT_ID
-   ```
-
-4. Sao chép [firebase_config.example.json](./firebase_config.example.json) thành
-   `firebase_config.json` ở thư mục gốc. Điền giá trị từ phần cài đặt ứng dụng
-   trong Firebase Console:
-   - Các giá trị chung: API key, Project ID, Messaging Sender ID và Storage
-     bucket (nếu project có bucket).
-   - Web: Web App ID và Auth domain.
-   - Android: Android App ID; package name phải khớp với ứng dụng Android.
-   - iOS: iOS App ID và Bundle ID; Bundle ID phải khớp với ứng dụng iOS.
-   - macOS: MacOS App ID.
-
-   Chỉ điền các trường của nền tảng bạn sử dụng. `firebase_config.json` đã được
-   thêm vào `.gitignore`; không commit tệp cấu hình cục bộ hoặc service-account
-   key/private key vào Git.
-
-5. Chạy ứng dụng từ thư mục gốc để truyền cấu hình lúc build. Có thể dùng lệnh
-   trực tiếp hoặc chạy script tiện ích dưới thư mục `scripts/`:
-
-   ```powershell
-   flutter run --dart-define-from-file=firebase_config.json
-   ```
-
-   hoặc
-
-   ```powershell
-   ./scripts/run_with_firebase.ps1
-   ```
-
-   Script này sẽ kiểm tra xem `firebase_config.json` đã tồn tại chưa và quay lại
-   hướng dẫn nếu thiếu thông tin cấu hình. Dùng cùng tùy chọn
-   `--dart-define-from-file=firebase_config.json` khi build ứng dụng. Nếu thiếu
-   cấu hình bắt buộc cho nền tảng hiện tại, màn hình Cloud Sync sẽ thông báo;
-   sau khi đăng nhập, dữ liệu môn học, phiên học, nhiệm vụ và điểm sẽ đồng bộ
-   với Firestore.
+### 4. Khởi chạy ứng dụng
+- **Chạy trên Windows Desktop:**
+  ```bash
+  flutter run -d windows
+  ```
+- **Chạy trên Trình duyệt Web (Chrome):**
+  ```bash
+  flutter run -d chrome
+  ```
+- **Chạy trên Thiết bị di động (Android / iOS):**
+  ```bash
+  flutter run
+  ```
 
 ---
 
-## 🧱 Kiến trúc nền tảng & Git Flow
+## 🧪 Kiểm Thử & Đảm Bảo Chất Lượng Mã Nguồn
 
-Dự án đang chuyển dần sang `Feature-first`, dùng `core` cho thành phần dùng chung
-và các feature service cho nghiệp vụ mới. Đây là kiến trúc chuyển tiếp: một số
-màn hình và provider cũ vẫn nằm ở thư mục gốc `screens/` và `providers/`.
+Dự án duy trì bộ kiểm thử tự động toàn diện bao quát tất cả các tính năng nghiệp vụ, CSDL, logic tính toán GPA và giao diện thi trắc nghiệm:
 
-```text
-lib/
-├── core/
-│   ├── theme/
-│   │   ├── app_colors.dart
-│   │   ├── app_typography.dart
-│   │   └── app_theme.dart
-│   └── widgets/
-│       ├── app_button.dart
-│       ├── app_text_field.dart
-│       └── app_dialog.dart
-├── features/
-│   ├── auth/
-│   │   └── auth_service.dart
-│   ├── analytics/
-│   └── cloud_sync/
-│       └── cloud_sync_service.dart
-├── models/
-├── providers/
-├── screens/
-├── services/
-├── widgets/
-└── main.dart
+```bash
+# Phân tích tĩnh mã nguồn (đạt 0 lỗi, 0 cảnh báo)
+flutter analyze
+
+# Chạy toàn bộ 45 unit & widget tests
+flutter test
 ```
 
-Các nguyên tắc hiện tại:
-- `core/theme`: định nghĩa màu sắc, typography và theme Light/Dark.
-- `core/widgets`: thành phần dùng chung như button, text field, dialog.
-- `features`: tách service theo nghiệp vụ; Auth service đã được nối vào provider.
-- `screens`, `providers`, `services`: phần legacy đang được chuyển dần, chưa phải Clean Architecture hoàn chỉnh.
-- `main.dart`: bootstrap, cấu hình Firebase và đăng ký Provider.
-
-### Trạng thái các hạng mục trong yêu cầu
-
-| Hạng mục | Trạng thái |
+### Danh sách test suite:
+| Tệp kiểm thử | Hạng mục kiểm tra |
 |---|---|
-| Provider, theme Light/Dark, bảng màu, typography | Đã cấu hình và app đang sử dụng |
-| Button, text field, dialog dùng chung | Đã có; button và text field được dùng trong luồng Auth |
-| Firebase Auth (đăng ký/đăng nhập email và Google) | Xác thực danh tính tài khoản với Firebase qua `StudyAuthService` |
-| Bảo vệ tài khoản Firebase | Đặt lại mật khẩu, xác minh email; chỉ tài khoản đã xác minh mới đồng bộ cloud |
-| Flutter App Lock (PIN 6 số, tự khóa khi app không còn active) | Lưu bằng secure storage trên thiết bị; là khóa giao diện cục bộ, không phải Firebase Auth |
-| Firestore security rules | Có file triển khai; team cần deploy vào Firebase project |
-| Git Flow, PR template, issue template, CI | Có trong repository |
-| Branch protection / GitHub Project board | Cần bật/tạo trong GitHub Settings theo [docs/git-flow.md](./docs/git-flow.md) |
-
-### Sử dụng khóa PIN trong Flutter
-
-1. Mở ứng dụng và nhấn biểu tượng khóa ở màn hình Home.
-2. Tạo PIN 6 chữ số và xác nhận để bật App Lock.
-3. Khi mở lại ứng dụng hoặc ứng dụng chuyển khỏi trạng thái active, nhập PIN để
-   tiếp tục. Dùng màn hình này để đổi hoặc tắt PIN; cần PIN hiện tại để đổi/tắt.
-
-PIN được lưu bằng `flutter_secure_storage` trên thiết bị, tách biệt với Firebase
-Auth. Nếu quên PIN, hiện chưa có chức năng khôi phục PIN; cần gỡ dữ liệu ứng dụng
-để xóa thông tin cục bộ và có thể mất dữ liệu local chưa đồng bộ. Hãy đồng bộ
-trước khi xóa dữ liệu. Sau 5 lần nhập sai liên tiếp, chức năng mở khóa tạm khóa
-trong 30 giây; các lần khóa tiếp theo tăng dần thời gian chờ, tối đa 15 phút.
-Trên web, App Lock chỉ bảo vệ giao diện phía client và không thay thế Firestore
-rules.
-
-### Git Flow cho cả nhóm
-
-Chi tiết kiến trúc, auth, analytics và sync được mô tả trong [docs/architecture-and-cloud-sync.md](./docs/architecture-and-cloud-sync.md).
-
-Để quản lý nhóm hiệu quả, nên dùng branch model sau:
-
-- `main`: nhánh production ổn định.
-- `develop`: nhánh tích hợp tính năng mới.
-- `feature/<name>`: phát triển tính năng riêng.
-- `bugfix/<name>`: sửa lỗi không release.
-- `hotfix/<name>`: sửa lỗi khẩn cấp trên main.
-- `release/<version>`: chuẩn bị release.
-
-Quy tắc bắt buộc:
-- Mỗi tính năng phải mở pull request về `develop`.
-- Mỗi PR cần review bởi ít nhất 1 người.
-- Mỗi bug fix cần có mô tả rõ: nguyên nhân, ảnh hưởng, cách kiểm tra.
-- Không trực tiếp commit lên `main` nếu chưa có review.
-
-Chi tiết đầy đủ về mô hình branch, thiết lập quyền nhánh trên GitHub và tiêu chí hoàn thành có trong [docs/git-flow.md](./docs/git-flow.md). Template PR chuẩn nằm ở [.github/pull_request_template.md](./.github/pull_request_template.md), template task ở [.github/ISSUE_TEMPLATE/task.md](./.github/ISSUE_TEMPLATE/task.md), và CI tự động check analyzer/test ở [.github/workflows/flutter_ci.yml](./.github/workflows/flutter_ci.yml).
+| `gpa_management_test.dart` | Quy đổi điểm hệ 10 -> hệ 4, điểm chữ, xếp loại, Stats Chip GPA, Mô phỏng What-If |
+| `quiz_taking_test.dart` | Làm bài trắc nghiệm, bấm giờ, nộp bài, xem câu sai kèm đáp án đúng, làm lại đề |
+| `database_and_schedule_test.dart` | Lưu trữ đề thi SQLite Transaction, thời khóa biểu, Cascade Delete |
+| `word_parser_test.dart` | Bóc tách câu hỏi, đáp án, lời giải từ đề thi Word |
+| `app_lock_test.dart` | Tạo/đổi mã PIN, khóa bảo mật, tự khóa khi app chuyển trạng thái background |
+| `study_provider_test.dart` | Quản lý môn học, phiên học Pomodoro, tính điểm trung bình môn có trọng số |
 
 ---
 
-## 🗺️ Lộ trình phát triển (Roadmap)
-
-- [x] Khởi tạo kho mã nguồn và tài liệu dự án
-- [x] Thiết lập kiến trúc mã nguồn Flutter (Base Architecture với `core/theme` và reusable widgets)
-- [ ] Xây dựng màn hình Home & Đồng hồ đếm giờ Pomodoro
-- [ ] Quản lý môn học và lưu trữ dữ liệu phiên học cục bộ
-- [ ] Màn hình thống kê biểu đồ trực quan
-- [x] Quản lý đầu điểm và thống kê điểm trung bình có trọng số (lưu cục bộ)
-- [ ] Quản lý danh sách nhiệm vụ & deadline
-- [x] Quản lý điểm số, trung bình có trọng số và biểu đồ điểm
-- [x] Theo dõi tiến độ mục tiêu, thống kê tuần và biểu đồ học tập
-- [x] Triển khai Cloud Sync Engine với Firebase Authentication và Firestore
-- [x] Cấu hình Firebase Web project riêng để sử dụng đồng bộ cloud thực tế
-- [ ] Cấu hình App ID Firebase cho Android/iOS/macOS nếu cần triển khai các nền tảng này
- main
-
----
-
-## 🔑 Tài Khoản Demo Mặc Định
+## 🔑 Tài Khoản Demo Trải Nghiệm Nhanh
 - **Email:** `demo@studytracker.com`
 - **Mật khẩu:** `password123`
-*(Hoặc nhấn nút "Dùng thử tài khoản Demo" trên màn hình Đăng nhập để trải nghiệm ngay).*
+- *(Hoặc bấm trực tiếp nút **"Dùng thử tài khoản Demo"** trên màn hình Đăng nhập để vào ngay ứng dụng).*
+
+---
+
+## 📄 Bản Quyền & Giấy Phép
+Dự án được phát triển phục vụ mục đích học tập và quản lý năng suất cá nhân. Mọi đóng góp (Pull Requests) và phản hồi đều được hoan nghênh!
