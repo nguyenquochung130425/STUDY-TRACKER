@@ -334,11 +334,8 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
                                       : Colors.grey.withValues(alpha: 0.2),
                                 ),
                               ),
-                              child: ListTile(
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 6,
-                                ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
                                 onTap: () {
                                   if (qCount > 0) {
                                     _startQuiz(assignment);
@@ -353,208 +350,233 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
                                     );
                                   }
                                 },
-                                leading: CircleAvatar(
-                                  backgroundColor: sub != null
-                                      ? Color(sub.colorValue).withValues(alpha: 0.2)
-                                      : AppColors.primary.withValues(alpha: 0.2),
-                                  child: Icon(
-                                    qCount > 0 ? Icons.quiz : Icons.assignment,
-                                    color: sub != null
-                                        ? Color(sub.colorValue)
-                                        : AppColors.primary,
-                                  ),
-                                ),
-                                title: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        assignment.title,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15,
-                                          decoration: assignment.isCompleted
-                                              ? TextDecoration.lineThrough
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                    if (qCount > 0)
-                                      Container(
-                                        margin: const EdgeInsets.only(left: 6),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary.withValues(alpha: 0.12),
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                        child: Text(
-                                          '$qCount câu',
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.primary,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Text(
-                                          sub?.name ?? 'Môn học',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: sub != null
-                                                ? Color(sub.colorValue)
-                                                : Colors.grey,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Hạn: ${assignment.formattedDueDate}',
-                                          style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                        ),
-                                      ],
-                                    ),
-                                    if (assignment.description.isNotEmpty) ...[
-                                      const SizedBox(height: 2),
-                                      Text(
-                                        assignment.description,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      if (qCount > 0)
-                                        Padding(
-                                          padding: const EdgeInsets.only(right: 4),
-                                          child: FilledButton.tonalIcon(
-                                            style: FilledButton.styleFrom(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 4,
-                                              ),
-                                              visualDensity: VisualDensity.compact,
-                                              backgroundColor:
-                                                  AppColors.primary.withValues(alpha: 0.12),
-                                              foregroundColor: AppColors.primary,
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          CircleAvatar(
+                                            backgroundColor: sub != null
+                                                ? Color(sub.colorValue).withValues(alpha: 0.2)
+                                                : AppColors.primary.withValues(alpha: 0.2),
+                                            child: Icon(
+                                              qCount > 0 ? Icons.quiz : Icons.assignment,
+                                              color: sub != null
+                                                  ? Color(sub.colorValue)
+                                                  : AppColors.primary,
                                             ),
-                                            icon: const Icon(Icons.play_arrow, size: 18),
-                                            label: const Text(
-                                              'Làm bài',
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            onPressed: () => _startQuiz(assignment),
                                           ),
-                                        ),
-                                      PopupMenuButton<String>(
-                                        onSelected: (val) {
-                                          if (val == 'start_quiz') {
-                                            _startQuiz(assignment);
-                                          } else if (val == 'edit_questions') {
-                                            Navigator.of(context)
-                                                .push(
-                                                  MaterialPageRoute<void>(
-                                                    builder: (_) => AssignmentEditScreen(
-                                                      initialAssignmentId: assignment.id,
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        assignment.title,
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 15,
+                                                          decoration: assignment.isCompleted
+                                                              ? TextDecoration.lineThrough
+                                                              : null,
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                )
-                                                .then((_) => _loadData());
-                                          } else if (val == 'toggle_status') {
-                                            final updated = assignment.copyWith(
-                                              isCompleted: !assignment.isCompleted,
-                                            );
-                                            _db.updateAssignment(updated);
-                                            context.read<StudyProvider>().updateTask(updated);
-                                            _loadData();
-                                          } else if (val == 'delete') {
-                                            _deleteAssignment(assignment);
-                                          }
-                                        },
-                                        itemBuilder: (ctx) => [
-                                          if (qCount > 0)
-                                            const PopupMenuItem(
-                                              value: 'start_quiz',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.play_circle_fill,
-                                                      size: 18, color: AppColors.primary),
-                                                  SizedBox(width: 8),
+                                                    if (qCount > 0)
+                                                      Container(
+                                                        margin: const EdgeInsets.only(left: 6),
+                                                        padding: const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          color: AppColors.primary.withValues(alpha: 0.12),
+                                                          borderRadius: BorderRadius.circular(6),
+                                                        ),
+                                                        child: Text(
+                                                          '$qCount câu',
+                                                          style: const TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight: FontWeight.bold,
+                                                            color: AppColors.primary,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Wrap(
+                                                  spacing: 8,
+                                                  runSpacing: 4,
+                                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      sub?.name ?? 'Môn học',
+                                                      style: TextStyle(
+                                                        fontSize: 12,
+                                                        color: sub != null
+                                                            ? Color(sub.colorValue)
+                                                            : Colors.grey,
+                                                        fontWeight: FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '•',
+                                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
+                                                    ),
+                                                    Text(
+                                                      'Hạn: ${assignment.formattedDueDate}',
+                                                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                                    ),
+                                                  ],
+                                                ),
+                                                if (assignment.description.isNotEmpty) ...[
+                                                  const SizedBox(height: 4),
                                                   Text(
-                                                    'Bắt đầu làm bài',
-                                                    style: TextStyle(
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppColors.primary,
-                                                    ),
+                                                    assignment.description,
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
                                                   ),
                                                 ],
-                                              ),
-                                            ),
-                                          if (qCount > 0)
-                                            const PopupMenuItem(
-                                              value: 'edit_questions',
-                                              child: Row(
-                                                children: [
-                                                  Icon(Icons.edit,
-                                                      size: 18, color: AppColors.primary),
-                                                  SizedBox(width: 8),
-                                                  Text('Sửa nội dung câu hỏi'),
-                                                ],
-                                              ),
-                                            ),
-                                          PopupMenuItem(
-                                            value: 'toggle_status',
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  assignment.isCompleted
-                                                      ? Icons.undo
-                                                      : Icons.check_circle_outline,
-                                                  size: 18,
-                                                  color: AppColors.success,
-                                                ),
-                                                SizedBox(width: 8),
-                                                Text(
-                                                  assignment.isCompleted
-                                                      ? 'Đánh dấu chưa xong'
-                                                      : 'Đánh dấu đã hoàn thành',
-                                                ),
                                               ],
                                             ),
                                           ),
-                                          const PopupMenuItem(
-                                            value: 'delete',
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.delete_outline,
-                                                    size: 18, color: AppColors.error),
-                                                SizedBox(width: 8),
-                                                Text('Xóa bài tập'),
-                                              ],
-                                            ),
+                                          PopupMenuButton<String>(
+                                            icon: const Icon(Icons.more_vert, size: 20),
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            onSelected: (val) {
+                                              if (val == 'start_quiz') {
+                                                _startQuiz(assignment);
+                                              } else if (val == 'edit_questions') {
+                                                Navigator.of(context)
+                                                    .push(
+                                                      MaterialPageRoute<void>(
+                                                        builder: (_) => AssignmentEditScreen(
+                                                          initialAssignmentId: assignment.id,
+                                                        ),
+                                                      ),
+                                                    )
+                                                    .then((_) => _loadData());
+                                              } else if (val == 'toggle_status') {
+                                                final updated = assignment.copyWith(
+                                                  isCompleted: !assignment.isCompleted,
+                                                );
+                                                _db.updateAssignment(updated);
+                                                context.read<StudyProvider>().updateTask(updated);
+                                                _loadData();
+                                              } else if (val == 'delete') {
+                                                _deleteAssignment(assignment);
+                                              }
+                                            },
+                                            itemBuilder: (ctx) => [
+                                              if (qCount > 0)
+                                                const PopupMenuItem(
+                                                  value: 'start_quiz',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.play_circle_fill,
+                                                          size: 18, color: AppColors.primary),
+                                                      SizedBox(width: 8),
+                                                      Text(
+                                                        'Bắt đầu làm bài',
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.bold,
+                                                          color: AppColors.primary,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              if (qCount > 0)
+                                                const PopupMenuItem(
+                                                  value: 'edit_questions',
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.edit,
+                                                          size: 18, color: AppColors.primary),
+                                                      SizedBox(width: 8),
+                                                      Text('Sửa nội dung câu hỏi'),
+                                                    ],
+                                                  ),
+                                                ),
+                                              PopupMenuItem(
+                                                value: 'toggle_status',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      assignment.isCompleted
+                                                          ? Icons.undo
+                                                          : Icons.check_circle_outline,
+                                                      size: 18,
+                                                      color: AppColors.success,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Text(
+                                                      assignment.isCompleted
+                                                          ? 'Đánh dấu chưa xong'
+                                                          : 'Đánh dấu đã hoàn thành',
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const PopupMenuItem(
+                                                value: 'delete',
+                                                child: Row(
+                                                  children: [
+                                                    Icon(Icons.delete_outline,
+                                                        size: 18, color: AppColors.error),
+                                                    SizedBox(width: 8),
+                                                    Text('Xóa bài tập'),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
+                                      if (qCount > 0) ...[
+                                        const SizedBox(height: 10),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
+                                          children: [
+                                            FilledButton.tonalIcon(
+                                              style: FilledButton.styleFrom(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 14,
+                                                  vertical: 4,
+                                                ),
+                                                visualDensity: VisualDensity.compact,
+                                                backgroundColor:
+                                                    AppColors.primary.withValues(alpha: 0.12),
+                                                foregroundColor: AppColors.primary,
+                                              ),
+                                              icon: const Icon(Icons.play_arrow, size: 18),
+                                              label: const Text(
+                                                'Làm bài',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              onPressed: () => _startQuiz(assignment),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
-                              );
+                              ),
+                            );
                           },
                         ),
                 ),
