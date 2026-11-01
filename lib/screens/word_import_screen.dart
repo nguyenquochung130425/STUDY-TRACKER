@@ -193,25 +193,34 @@ BẢNG ĐÁP ÁN: 1.A  2.C  3.B
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tạo Đề Từ File Word / Dán Text'),
+        titleSpacing: 16,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Tạo Đề Từ File Word / Dán Text',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         elevation: 0,
         actions: [
           if (_parsedExam != null && _parsedExam!.questions.isNotEmpty)
             FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.success,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                visualDensity: VisualDensity.compact,
               ),
               icon: _isSaving
                   ? const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: 14,
+                      height: 14,
                       child: CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.check, size: 18),
+                  : const Icon(Icons.check, size: 16),
               label: const Text('Lưu đề thi'),
               onPressed: _isSaving ? null : _saveExamToDatabase,
             ),
@@ -261,10 +270,12 @@ BẢNG ĐÁP ÁN: 1.A  2.C  3.B
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           initialValue: _selectedSubjectId,
+                          isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Môn học',
                             border: OutlineInputBorder(),
-                            prefixIcon: Icon(Icons.book_outlined),
+                            prefixIcon: Icon(Icons.book_outlined, size: 20),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                           ),
                           items: subjects.map((Subject s) {
                             return DropdownMenuItem(
@@ -279,7 +290,7 @@ BẢNG ĐÁP ÁN: 1.A  2.C  3.B
                           onChanged: (val) => setState(() => _selectedSubjectId = val),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       // Hạn nộp
                       Expanded(
                         child: InkWell(
@@ -298,11 +309,14 @@ BẢNG ĐÁP ÁN: 1.A  2.C  3.B
                             decoration: const InputDecoration(
                               labelText: 'Hạn nộp',
                               border: OutlineInputBorder(),
-                              prefixIcon: Icon(Icons.calendar_today),
+                              prefixIcon: Icon(Icons.calendar_today, size: 18),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                             ),
                             child: Text(
                               DateFormat('dd/MM/yyyy').format(_dueDate),
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 13),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -328,19 +342,21 @@ BẢNG ĐÁP ÁN: 1.A  2.C  3.B
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.description_outlined, color: AppColors.primary, size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Nội dung đề (Word hoặc Dán Text)',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      const Icon(Icons.description_outlined, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Text(
+                          'Nội dung đề (Word / Dán Text)',
+                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                       TextButton.icon(
+                        style: TextButton.styleFrom(
+                          visualDensity: VisualDensity.compact,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
                         icon: const Icon(Icons.refresh, size: 16),
                         label: const Text('Mẫu đề'),
                         onPressed: () {

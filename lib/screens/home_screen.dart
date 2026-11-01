@@ -172,30 +172,39 @@ class HomeScreen extends StatelessWidget {
     final study = context.watch<StudyProvider>();
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final formattedDate = DateFormat('EEEE, d MMMM yyyy').format(now);
+    final formattedDate = DateFormat('EEE, dd/MM/yyyy').format(now);
 
     return Scaffold(
       appBar: AppBar(
+        titleSpacing: 16,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Study Tracker 🎯',
-              style: theme.textTheme.titleLarge?.copyWith(
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
               formattedDate,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.calendar_month),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(),
+            icon: const Icon(Icons.calendar_month, size: 21),
             tooltip: 'Thời khóa biểu',
             onPressed: () {
               Navigator.of(context).push(
@@ -206,7 +215,10 @@ class HomeScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.menu_book),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(),
+            icon: const Icon(Icons.menu_book, size: 21),
             tooltip: 'Quản lý môn học',
             onPressed: () {
               Navigator.of(context).push(
@@ -217,7 +229,10 @@ class HomeScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.lock_outline),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(),
+            icon: const Icon(Icons.lock_outline, size: 21),
             tooltip: 'Khóa ứng dụng bằng PIN',
             onPressed: () {
               Navigator.of(context).push(
@@ -228,7 +243,10 @@ class HomeScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.cloud_sync_outlined),
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.only(left: 4, right: 8),
+            constraints: const BoxConstraints(),
+            icon: const Icon(Icons.cloud_sync_outlined, size: 21),
             tooltip: 'Tài khoản và đồng bộ',
             onPressed: () {
               Navigator.of(context).push(
@@ -345,33 +363,35 @@ class HomeScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.calendar_month,
-                      size: 18,
-                      color: AppColors.primary,
-                    ),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.calendar_month,
+                  size: 18,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Lịch học hôm nay',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Lịch học hôm nay',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               TextButton(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -379,7 +399,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: const Text('Xem thời khóa biểu'),
+                child: const Text('Xem TKB'),
               ),
             ],
           ),
@@ -395,13 +415,15 @@ class HomeScreen extends StatelessWidget {
                     color: AppColors.success,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Hôm nay không có buổi học nào trên lớp.',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
+                  Expanded(
+                    child: Text(
+                      'Hôm nay không có buổi học nào trên lớp.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                      ),
                     ),
                   ),
                 ],
@@ -449,20 +471,23 @@ class HomeScreen extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
+                      if (schedule.room.isNotEmpty) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            schedule.room,
+                            style: const TextStyle(fontSize: 11),
+                          ),
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          schedule.room,
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                      ),
+                      ],
                     ],
                   ),
                 );
@@ -494,8 +519,19 @@ class HomeScreen extends StatelessWidget {
           width: 1,
         ),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AssignmentManagementScreen(),
+              ),
+            );
+          },
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         leading: Checkbox(
           value: task.isCompleted,
           activeColor: AppColors.success,
@@ -517,54 +553,67 @@ class HomeScreen extends StatelessWidget {
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
-          child: Row(
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: subjectColor,
-                  shape: BoxShape.circle,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: subjectColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 120),
+                    child: Text(
+                      subject?.name ?? 'Môn học',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: subjectColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 6),
-              Text(
-                subject?.name ?? 'Môn học',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: subjectColor,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Icon(
-                Icons.calendar_today_outlined,
-                size: 12,
-                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                task.formattedDueDate,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: 12,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    task.formattedDueDate,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.arrow_forward_ios, size: 14),
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute<void>(
-                builder: (_) => const AssignmentManagementScreen(),
-              ),
-            );
-          },
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 14,
+          color: Colors.grey,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 

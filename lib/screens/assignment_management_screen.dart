@@ -206,9 +206,20 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quản lý Bài Tập & Đề Thi'),
+        titleSpacing: 16,
+        title: const FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Quản lý Bài Tập & Đề Thi',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
         actions: [
           IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            constraints: const BoxConstraints(),
             icon: const Icon(Icons.edit_note),
             tooltip: 'Chỉnh sửa nội dung đề',
             onPressed: () async {
@@ -221,6 +232,9 @@ class _AssignmentManagementScreenState extends State<AssignmentManagementScreen>
             },
           ),
           IconButton(
+            visualDensity: VisualDensity.compact,
+            padding: const EdgeInsets.only(left: 4, right: 8),
+            constraints: const BoxConstraints(),
             icon: const Icon(Icons.upload_file),
             tooltip: 'Tạo đề từ Word / Dán Text',
             onPressed: () async {

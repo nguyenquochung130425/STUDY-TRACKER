@@ -22,7 +22,7 @@ class DailyStatsCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(20),
@@ -31,27 +31,32 @@ class DailyStatsCard extends StatelessWidget {
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _StatItem(
-            icon: Icons.timer_outlined,
-            iconColor: Colors.blue,
-            label: 'Học hôm nay',
-            value: _formatDuration(study.todaySeconds),
+          Expanded(
+            child: _StatItem(
+              icon: Icons.timer_outlined,
+              iconColor: Colors.blue,
+              label: 'Học hôm nay',
+              value: _formatDuration(study.todaySeconds),
+            ),
           ),
           _divider(theme),
-          _StatItem(
-            icon: Icons.check_circle_outline,
-            iconColor: Colors.green,
-            label: 'Pomodoro',
-            value: '${pomodoro.completedPomodoros} phiên',
+          Expanded(
+            child: _StatItem(
+              icon: Icons.check_circle_outline,
+              iconColor: Colors.green,
+              label: 'Pomodoro',
+              value: '${pomodoro.completedPomodoros} phiên',
+            ),
           ),
           _divider(theme),
-          _StatItem(
-            icon: Icons.local_fire_department,
-            iconColor: Colors.orange,
-            label: 'Chuỗi ngày',
-            value: '${study.currentStreakDays} ngày',
+          Expanded(
+            child: _StatItem(
+              icon: Icons.local_fire_department,
+              iconColor: Colors.orange,
+              label: 'Chuỗi ngày',
+              value: '${study.currentStreakDays} ngày',
+            ),
           ),
         ],
       ),
@@ -83,30 +88,43 @@ class _StatItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: iconColor),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        Text(
-          value,
-          style: theme.textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              maxLines: 1,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
